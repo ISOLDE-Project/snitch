@@ -9,3 +9,8 @@ modelsim.ini
 transcript
 
 gmon.out
+ 
+hw/system/snitch_cluster/launch_runs.tcl
+vivado*.*
+vivado/
+       

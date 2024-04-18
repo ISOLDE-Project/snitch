@@ -300,3 +300,15 @@ help:
 	@echo -e "Additional useful targets from the included Makefrag:"
 	@echo -e "${Blue}traces         ${Black}Generate the better readable traces in .logs/trace_hart_<hart_id>.txt with spike-dasm."
 	@echo -e "${Blue}annotate       ${Black}Annotate the better readable traces in .logs/trace_hart_<hart_id>.s with the source code related with the retired instructions."
+
+
+$(GENERATED_DIR)/sources.tcl: $(CFG) Makefile
+	bender script vivado | tee $(GENERATED_DIR)/sources.tcl
+
+
+.PHONY: vivado_lint
+
+vivado_lint: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
+	rm -rf vivado && mkdir -p vivado
+	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >launch_runs.tcl
+	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee $(TOP)_vivado.log

@@ -1,8 +1,21 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# DEPRECATED
+# ISOLDE Project
 
-This repository has been deprecated. However, development on Snitch-related projects continues in the following new dedicated repositories:
+## Vivado ZCU102
+
+in console type:
+```
+source eth.sh
+cd hw/system/snitch_cluster/
+make vivado_lint
+```
+
+The folder hw/system/snitch_cluster/vivado will contain the vivado project
+
+# PULP Info
+
+ Development on Snitch-related projects continues in the following new dedicated repositories:
 
 * Snitch cluster: https://github.com/pulp-platform/snitch_cluster
 * Occamy: https://github.com/pulp-platform/occamy
