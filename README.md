@@ -38,7 +38,13 @@ make vivado_lint
 ```
 
 The folder hw/system/snitch_cluster/vivado will contain the vivado project
-# Github cli
+# Github 
+## git configuration
+```
+git config --global user.name "FIRST_NAME LAST_NAME"
+git config --global user.email "MY_NAME@example.com"
+```
+## github cli  
 [Take GitHub to the command line](https://github.com/cli/cli#installation)  
 [GitHub CLI commands](https://cli.github.com/manual/gh)  
 ## Instalation  
@@ -46,6 +52,14 @@ The folder hw/system/snitch_cluster/vivado will contain the vivado project
 source ./eth.sh
 conda install gh --channel conda-forge
 ```
+## auth
+```
+gh auth login
+gh auth setup-git
+....
+git push
+```
+
 # PULP Info
 
  Development on Snitch-related projects continues in the following new dedicated repositories:
