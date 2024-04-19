@@ -1,18 +1,51 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # ISOLDE Project
+## Python environment
+```
+wget https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Linux-x86_64.sh
+bash Miniconda3-py310_24.3.0-0-Linux-x86_64.sh 
+```
+create a Conda environment  
+```
+source ~/miniconda3/etc/profile.d/conda.sh
+conda create --name snitch python=3.10
+conda activate snitch
+pip3 install -r python-requirements.txt
+```
+## Bender
+Based on your linux version, select something from **https://github.com/pulp-platform/bender/releases**  
 
-## Vivado ZCU102
-
+```
+mkdir ~/eth && cd ~/eth
+wget https://github.com/pulp-platform/bender/releases/download/v0.28.0/bender-0.28.0-x86_64-linux-gnu-ubuntu20.04.tar.gz
+mkdir bin && mv bender bin/
+mkdir doc && cd doc
+wget https://github.com/pulp-platform/bender/blob/master/README.md
+```
+## Vivado 
+In home folder create  **vivado.sh** with the following content:  
+```
+export  XILINXD_LICENSE_FILE=<vivado licence server>   
+source <instal path>/Vivado/2022.1/.settings64-Vivado.sh
+```
+### Vivado project
 in console type:
 ```
-source eth.sh
+source ./eth.sh
 cd hw/system/snitch_cluster/
 make vivado_lint
 ```
 
 The folder hw/system/snitch_cluster/vivado will contain the vivado project
-
+# Github cli
+[Take GitHub to the command line](https://github.com/cli/cli#installation)  
+[GitHub CLI commands](https://cli.github.com/manual/gh)  
+## Instalation  
+```
+source ./eth.sh
+conda install gh --channel conda-forge
+```
 # PULP Info
 
  Development on Snitch-related projects continues in the following new dedicated repositories:
