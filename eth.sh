@@ -19,5 +19,5 @@ export BENDER=~/eth/bin/bender
 source $MINICONDA
 conda activate $MINICONDA_ENV
 
-export PATH=~/eth/bin:$PATH
+export PATH=~/eth/bin:~/verible/bin:$PATH
 source ~/vivado.sh

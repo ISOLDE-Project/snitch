@@ -17,8 +17,8 @@
         addr_width: 48,
         data_width: 64,
         tcdm: {
-            size: 128,
-            banks: 32,
+            size: 64,
+            banks: 16,
         },
         cluster_periph_size: 64, // kB
         zero_mem_size: 64, // kB
@@ -54,13 +54,6 @@
                     cacheline: 256 // word size in bits
                 },
                 cores: [
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
-                    { $ref: "#/compute_core_template" },
                     { $ref: "#/compute_core_template" },
                     { $ref: "#/dma_core_template" },
                 ]
