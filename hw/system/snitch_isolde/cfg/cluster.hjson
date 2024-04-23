@@ -15,7 +15,7 @@
         cluster_base_offset: 0, // 0x0
         cluster_base_hartid: 0,
         addr_width: 48,
-        data_width: 64,
+        data_width: 32,
         tcdm: {
             size: 128,
             banks: 32,
@@ -76,16 +76,16 @@
     },
     // Templates.
     compute_core_template: {
-        isa: "rv32imafd",
-        xssr: true,
-        xfrep: true,
+        isa: "rv32i",
+        xssr: false,
+        xfrep: false,
         xdma: false,
-        xf16: true,
-        xf16alt: true,
-        xf8: true,
-        xf8alt: true,
-        xfdotp: true,
-        xfvec: true,
+        xf16: false,
+        xf16alt: false,
+        xf8: false,
+        xf8alt: false,
+        xfdotp: false,
+        xfvec: false,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
@@ -97,7 +97,7 @@
         // Xdiv_sqrt: true,
     },
     dma_core_template: {
-        isa: "rv32imafd",
+        isa: "rv32i",
         // Xdiv_sqrt: true,
         # isa: "rv32ema",
         xdma: true

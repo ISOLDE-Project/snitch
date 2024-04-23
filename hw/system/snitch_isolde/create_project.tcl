@@ -1,6 +1,7 @@
 ################################################################
 # configure board
-source ../../../board/xilinix_zcu104.cfg
+set board_suffix zcu102
+source ../../../board/xilinix_${board_suffix}.cfg
 ################################################################
 create_project $project  ./vivado/$project  -part $part  -force
 source generated/sources.tcl

@@ -14,7 +14,7 @@ if {$argc > 1 && [lindex $argv 1]} { set EXT_JTAG true }
 # Create project
 set project occamy_xilinx
 
-create_project $project ./occamy_xilinx -force -part xcvu37p-fsvh2892-2L-e
+create_project $project ./occamy_xilinx -force -part xcvm1802-vsva2197-2MP-e-S
 set_property XPM_LIBRARIES XPM_MEMORY [current_project]
 
 # Define sources
@@ -28,8 +28,8 @@ if {[file exists ${ooc_constraint_file}]} {
 }
 
 # Buggy Vivado doesn't like these files. That's ok, we don't need them anyways.
-set_property IS_ENABLED 0 [get_files -regex .*/axi_intf.sv]
-set_property IS_ENABLED 0 [get_files -regex .*/reg_intf.sv]
+#set_property IS_ENABLED 0 [get_files -regex .*/axi_intf.sv]
+#set_property IS_ENABLED 0 [get_files -regex .*/reg_intf.sv]
 
 # Package IP
 set_property top occamy_xilinx [current_fileset]
