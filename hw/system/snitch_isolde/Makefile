@@ -318,4 +318,10 @@ vivado-lint: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources
 	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
+vivado-synth: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
+	rm -rf vivado && mkdir -p vivado
+	@echo "launch_runs synth_1 " >launch_runs.tcl
+	@echo "wait_on_runs synth_1" >>launch_runs.tcl
+	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
+
 generate:  $(GENERATED_DIR)/snitch_cluster_wrapper.sv
