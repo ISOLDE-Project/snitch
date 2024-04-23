@@ -1,4 +1,8 @@
-create_project isolde-zcu102 ./vivado/isolde-zcu102 -part xczu9eg-ffvb1156-2-e -force
+################################################################
+# configure board
+source ../../../board/xilinix_zcu104.cfg
+################################################################
+create_project $project  ./vivado/$project  -part $part  -force
 source generated/sources.tcl
 set_property top snitch_cluster_wrapper [current_fileset]
 update_compile_order -fileset sources_1

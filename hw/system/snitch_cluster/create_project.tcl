@@ -1,6 +1,6 @@
 ################################################################
 # configure board
-source board/xilinix_zcu104.cfg
+source ../../../board/xilinix_zcu104.cfg
 ################################################################
 create_project $project  ./vivado/$project  -part $part  -force
 source generated/sources.tcl
