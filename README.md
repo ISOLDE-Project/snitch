@@ -19,6 +19,7 @@ Based on your linux version, select something from **https://github.com/pulp-pla
 ```
 mkdir ~/eth && cd ~/eth
 wget https://github.com/pulp-platform/bender/releases/download/v0.28.0/bender-0.28.0-x86_64-linux-gnu-ubuntu20.04.tar.gz
+tar xzf bender-0.28.0-x86_64-linux-gnu-ubuntu20.04.tar.gz
 mkdir bin && mv bender bin/
 mkdir doc && cd doc
 wget https://github.com/pulp-platform/bender/blob/master/README.md
@@ -28,6 +29,13 @@ In home folder create  **vivado.sh** with the following content:
 ```
 export  XILINXD_LICENSE_FILE=<vivado licence server>   
 source <instal path>/Vivado/2022.1/.settings64-Vivado.sh
+```
+## Verible
+```
+mkdir ~/verible && cd ~/verible
+wget https://github.com/chipsalliance/verible/releases/download/v0.0-3640-gec69caeb/verible-v0.0-3640-gec69caeb-linux-static-x86_64.tar.gz
+tar xzf verible-v0.0-3640-gec69caeb-linux-static-x86_64.tar.gz
+ln -s verible-v0.0-3640-gec69caeb/bin/ bin
 ```
 ### Vivado project
 in console type:

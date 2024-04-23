@@ -306,9 +306,22 @@ $(GENERATED_DIR)/sources.tcl: $(CFG) Makefile
 	bender script vivado | tee $(GENERATED_DIR)/sources.tcl
 
 
-.PHONY: vivado_lint
+.PHONY: vivado-lint vivado-syn vivado-clean
 
-vivado_lint: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
+vivado-lint: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
 	rm -rf vivado && mkdir -p vivado
 	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >launch_runs.tcl
-	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee $(TOP)_vivado.log
+	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
+
+vivado-syn: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
+	rm -rf vivado && mkdir -p vivado
+	@echo "launch_runs synth_1" >  launch_runs.tcl
+	@echo "wait_on_run synth_1" >> launch_runs.tcl
+	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
+
+
+vivado-clean:
+	rm -fr vivado
+	rm -f vivado*.*
+	rm -f launch_runs.tcl
+	
