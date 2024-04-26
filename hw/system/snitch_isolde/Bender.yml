@@ -13,7 +13,7 @@ dependencies:
   test: {path: ../../ip/test}
 sources:
   # Level 0:
-  - generated/snitch_cluster_wrapper.sv
+  - generated/snitch_cluster_wrapper_fixed.sv
   - src/top_isolde_ip.v
   # Level 1:
   - target: any(simulation, verilator)
