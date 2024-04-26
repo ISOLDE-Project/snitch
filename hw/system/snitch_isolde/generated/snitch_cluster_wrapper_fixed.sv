@@ -34,21 +34,13 @@ package snitch_cluster_pkg;
   localparam int unsigned NarrowUserWidth = 1;
   localparam int unsigned WideUserWidth = 1;
 
-  localparam int unsigned ICacheLineWidth [NrHives] = '{
-    256
-};
-  localparam int unsigned ICacheLineCount [NrHives] = '{
-    128
-};
-  localparam int unsigned ICacheSets [NrHives] = '{
-    2
-};
+  localparam int unsigned ICacheLineWidth[NrHives] = '{256};
+  localparam int unsigned ICacheLineCount[NrHives] = '{128};
+  localparam int unsigned ICacheSets[NrHives] = '{2};
 
-  localparam int unsigned Hive [NrCores] = '{0, 0};
+  localparam int unsigned Hive[NrCores] = '{0, 0};
 
-  typedef struct packed {
-    logic [0:0] reserved;
-  } sram_cfg_t;
+  typedef struct packed {logic [0:0] reserved;} sram_cfg_t;
 
   typedef struct packed {
     sram_cfg_t icache_tag;
@@ -56,17 +48,17 @@ package snitch_cluster_pkg;
     sram_cfg_t tcdm;
   } sram_cfgs_t;
 
-  typedef logic [AddrWidth-1:0]         addr_t;
-  typedef logic [NarrowDataWidth-1:0]   data_t;
+  typedef logic [AddrWidth-1:0] addr_t;
+  typedef logic [NarrowDataWidth-1:0] data_t;
   typedef logic [NarrowDataWidth/8-1:0] strb_t;
-  typedef logic [WideDataWidth-1:0]     data_dma_t;
-  typedef logic [WideDataWidth/8-1:0]   strb_dma_t;
-  typedef logic [NarrowIdWidthIn-1:0]   narrow_in_id_t;
-  typedef logic [NarrowIdWidthOut-1:0]  narrow_out_id_t;
-  typedef logic [WideIdWidthIn-1:0]     wide_in_id_t;
-  typedef logic [WideIdWidthOut-1:0]    wide_out_id_t;
-  typedef logic [NarrowUserWidth-1:0]   user_t;
-  typedef logic [WideUserWidth-1:0]     user_dma_t;
+  typedef logic [WideDataWidth-1:0] data_dma_t;
+  typedef logic [WideDataWidth/8-1:0] strb_dma_t;
+  typedef logic [NarrowIdWidthIn-1:0] narrow_in_id_t;
+  typedef logic [NarrowIdWidthOut-1:0] narrow_out_id_t;
+  typedef logic [WideIdWidthIn-1:0] wide_in_id_t;
+  typedef logic [WideIdWidthOut-1:0] wide_out_id_t;
+  typedef logic [NarrowUserWidth-1:0] user_t;
+  typedef logic [WideUserWidth-1:0] user_dma_t;
 
   `AXI_TYPEDEF_ALL(narrow_in, addr_t, narrow_in_id_t, data_t, strb_t, user_t)
   `AXI_TYPEDEF_ALL(narrow_out, addr_t, narrow_out_id_t, data_t, strb_t, user_t)
@@ -86,131 +78,127 @@ package snitch_cluster_pkg;
       default: 0
   };
 
-  localparam fpnew_pkg::fpu_implementation_t FPUImplementation [2] = '{
-    '{
-        PipeRegs: // FMA Block
-                  '{
-                    '{  3, // FP32
-                        3, // FP64
-                        2, // FP16
-                        1, // FP8
-                        2, // FP16alt
-                        1  // FP8alt
-                      },
-                    '{1, 1, 1, 1, 1, 1},   // DIVSQRT
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // NONCOMP
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // CONV
-                    '{2,
-                      2,
-                      2,
-                      2,
-                      2,
-                      2}    // DOTP
-                    },
-        UnitTypes: '{'{fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED},  // FMA
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}, // DIVSQRT
-                    '{fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL}, // NONCOMP
-                    '{fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED},   // CONV
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}}, // DOTP
-        PipeConfig: fpnew_pkg::BEFORE
-    },
-    '{
-        PipeRegs: // FMA Block
-                  '{
-                    '{  3, // FP32
-                        3, // FP64
-                        2, // FP16
-                        1, // FP8
-                        2, // FP16alt
-                        1  // FP8alt
-                      },
-                    '{1, 1, 1, 1, 1, 1},   // DIVSQRT
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // NONCOMP
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // CONV
-                    '{2,
-                      2,
-                      2,
-                      2,
-                      2,
-                      2}    // DOTP
-                    },
-        UnitTypes: '{'{fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED},  // FMA
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}, // DIVSQRT
-                    '{fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL}, // NONCOMP
-                    '{fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED},   // CONV
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}}, // DOTP
-        PipeConfig: fpnew_pkg::BEFORE
-    }
+  localparam fpnew_pkg::fpu_implementation_t FPUImplementation[2] = '{
+      '{
+          PipeRegs:  // FMA Block
+          '{
+              '{
+                  3,  // FP32
+                  3,  // FP64
+                  2,  // FP16
+                  1,  // FP8
+                  2,  // FP16alt
+                  1  // FP8alt
+              },
+              '{1, 1, 1, 1, 1, 1},  // DIVSQRT
+              '{1, 1, 1, 1, 1, 1},  // NONCOMP
+              '{1, 1, 1, 1, 1, 1},  // CONV
+              '{2, 2, 2, 2, 2, 2}  // DOTP
+          },
+          UnitTypes: '{
+              '{
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED
+              },  // FMA
+              '{
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED
+              },  // DIVSQRT
+              '{
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL
+              },  // NONCOMP
+              '{
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED
+              },  // CONV
+              '{
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED
+              }
+          },  // DOTP
+          PipeConfig: fpnew_pkg::BEFORE
+      },
+      '{
+          PipeRegs:  // FMA Block
+          '{
+              '{
+                  3,  // FP32
+                  3,  // FP64
+                  2,  // FP16
+                  1,  // FP8
+                  2,  // FP16alt
+                  1  // FP8alt
+              },
+              '{1, 1, 1, 1, 1, 1},  // DIVSQRT
+              '{1, 1, 1, 1, 1, 1},  // NONCOMP
+              '{1, 1, 1, 1, 1, 1},  // CONV
+              '{2, 2, 2, 2, 2, 2}  // DOTP
+          },
+          UnitTypes: '{
+              '{
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED
+              },  // FMA
+              '{
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED
+              },  // DIVSQRT
+              '{
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL,
+                  fpnew_pkg::PARALLEL
+              },  // NONCOMP
+              '{
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED,
+                  fpnew_pkg::MERGED
+              },  // CONV
+              '{
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED,
+                  fpnew_pkg::DISABLED
+              }
+          },  // DOTP
+          PipeConfig: fpnew_pkg::BEFORE
+      }
   };
 
 
@@ -219,138 +207,170 @@ package snitch_cluster_pkg;
 endpackage
 // verilog_lint: waive-stop package-filename
 
-module snitch_cluster_wrapper (
-  input  logic                                   clk_i,
-  input  logic                                   rst_ni,
-  input  logic [snitch_cluster_pkg::NrCores-1:0] debug_req_i,
-  input  logic [snitch_cluster_pkg::NrCores-1:0] meip_i,
-  input  logic [snitch_cluster_pkg::NrCores-1:0] mtip_i,
-  input  logic [snitch_cluster_pkg::NrCores-1:0] msip_i,
-  output snitch_cluster_pkg::addr_t axi_awaddr
-//  input  snitch_cluster_pkg::narrow_in_req_t     narrow_in_req_i,
-//  output snitch_cluster_pkg::narrow_in_resp_t    narrow_in_resp_o,
-//  output snitch_cluster_pkg::narrow_out_req_t    narrow_out_req_o,
-//  input  snitch_cluster_pkg::narrow_out_resp_t   narrow_out_resp_i,
-//  output snitch_cluster_pkg::wide_out_req_t      wide_out_req_o,
- // input  snitch_cluster_pkg::wide_out_resp_t     wide_out_resp_i,
-  //input  snitch_cluster_pkg::wide_in_req_t       wide_in_req_i,
-  //output snitch_cluster_pkg::wide_in_resp_t      wide_in_resp_o
+module  snitch_cluster_wrapper (
+    input  logic                                                                    clk_i,
+    input  logic                                                                    rst_ni,
+    input  logic                                  [snitch_cluster_pkg::NrCores-1:0] debug_req_i,
+    input  logic                                  [snitch_cluster_pkg::NrCores-1:0] meip_i,
+    input  logic                                  [snitch_cluster_pkg::NrCores-1:0] mtip_i,
+    input  logic                                  [snitch_cluster_pkg::NrCores-1:0] msip_i,
+    //request
+    output snitch_cluster_pkg::wide_out_aw_chan_t                                   aw,
+    output logic                                                                    aw_valid,
+    output snitch_cluster_pkg::wide_out_w_chan_t                                    w,
+    output logic                                                                    w_valid,
+    output logic                                                                    b_ready,
+    output snitch_cluster_pkg::wide_out_ar_chan_t                                   ar,
+    output logic                                                                    ar_valid,
+    output logic                                                                    r_ready,
+    //response
+    input  logic                                                                    aw_ready,
+    input  logic                                                                    ar_ready,
+    input  logic                                                                    w_ready,
+    input  logic                                                                    b_valid,
+    input  snitch_cluster_pkg::wide_out_b_chan_t                                    b,
+    input  logic                                                                    r_valid,
+    input  snitch_cluster_pkg::wide_out_r_chan_t                                    r
+    //  input  snitch_cluster_pkg::narrow_in_req_t     narrow_in_req_i,
+    //  output snitch_cluster_pkg::narrow_in_resp_t    narrow_in_resp_o,
+    //  output snitch_cluster_pkg::narrow_out_req_t    narrow_out_req_o,
+    //  input  snitch_cluster_pkg::narrow_out_resp_t   narrow_out_resp_i,
+    //  output snitch_cluster_pkg::wide_out_req_t      wide_out_req_o,
+    // input  snitch_cluster_pkg::wide_out_resp_t     wide_out_resp_i,
+    //input  snitch_cluster_pkg::wide_in_req_t       wide_in_req_i,
+    //output snitch_cluster_pkg::wide_in_resp_t      wide_in_resp_o
 );
 
-  localparam int unsigned NumIntOutstandingLoads [2] = '{1, 1};
-  localparam int unsigned NumIntOutstandingMem [2] = '{4, 4};
-  localparam int unsigned NumFPOutstandingLoads [2] = '{4, 4};
-  localparam int unsigned NumFPOutstandingMem [2] = '{4, 4};
-  localparam int unsigned NumDTLBEntries [2] = '{1, 1};
-  localparam int unsigned NumITLBEntries [2] = '{1, 1};
-  localparam int unsigned NumSequencerInstr [2] = '{16, 16};
-  localparam int unsigned NumSsrs [2] = '{1, 1};
-  localparam int unsigned SsrMuxRespDepth [2] = '{4, 4};
+  localparam int unsigned NumIntOutstandingLoads[2] = '{1, 1};
+  localparam int unsigned NumIntOutstandingMem[2] = '{4, 4};
+  localparam int unsigned NumFPOutstandingLoads[2] = '{4, 4};
+  localparam int unsigned NumFPOutstandingMem[2] = '{4, 4};
+  localparam int unsigned NumDTLBEntries[2] = '{1, 1};
+  localparam int unsigned NumITLBEntries[2] = '{1, 1};
+  localparam int unsigned NumSequencerInstr[2] = '{16, 16};
+  localparam int unsigned NumSsrs[2] = '{1, 1};
+  localparam int unsigned SsrMuxRespDepth[2] = '{4, 4};
 
-    snitch_cluster_pkg::wide_out_req_t      wide_out_req_o;
-    snitch_cluster_pkg::wide_out_resp_t     wide_out_resp_i;
-    
-    assign wide_out_req_o.aw.addr = axi_awaddr;
-    
+  snitch_cluster_pkg::wide_out_req_t  wide_out_req_o;
+  snitch_cluster_pkg::wide_out_resp_t wide_out_resp_i;
+
+  //request
+  assign wide_out_req_o.aw        = aw;
+  assign wide_out_req_o.aw_valid  = aw_valid;
+  assign wide_out_req_o.w         = w;
+  assign wide_out_req_o.w_valid   = w_valid;
+  assign wide_out_req_o.b_ready   = b_ready;
+  assign wide_out_req_o.ar        = ar;
+  assign wide_out_req_o.ar_valid  = ar_valid;
+  assign wide_out_req_o.r_ready   = r_ready;
+  //response
+  assign wide_out_resp_i.aw_ready = aw_ready;
+  assign wide_out_resp_i.ar_ready = ar_ready;
+  assign wide_out_resp_i.w_ready  = w_ready;
+  assign wide_out_resp_i.b_valid  = b_valid;
+  assign wide_out_resp_i.b        = b;
+  assign wide_out_resp_i.r_valid  = r_valid;
+  assign wide_out_resp_i.r        = r;
+
   // Snitch cluster under test.
   snitch_cluster #(
-    .PhysicalAddrWidth (48),
-    .NarrowDataWidth (32),
-    .WideDataWidth (512),
-    .NarrowIdWidthIn (snitch_cluster_pkg::NarrowIdWidthIn),
-    .WideIdWidthIn (snitch_cluster_pkg::WideIdWidthIn),
-    .NarrowUserWidth (snitch_cluster_pkg::NarrowUserWidth),
-    .WideUserWidth (snitch_cluster_pkg::WideUserWidth),
-    .BootAddr (32'h1000),
-    .narrow_in_req_t  (0),  //.narrow_in_req_t (snitch_cluster_pkg::narrow_in_req_t),
-    .narrow_in_resp_t (0),  //.narrow_in_resp_t (snitch_cluster_pkg::narrow_in_resp_t),
-  //  .narrow_out_req_t (snitch_cluster_pkg::narrow_out_req_t),
-  //  .narrow_out_resp_t (snitch_cluster_pkg::narrow_out_resp_t),
-    .wide_out_req_t (snitch_cluster_pkg::wide_out_req_t),
-    .wide_out_resp_t (snitch_cluster_pkg::wide_out_resp_t),
-    .wide_in_req_t (snitch_cluster_pkg::wide_in_req_t),
-    .wide_in_resp_t (snitch_cluster_pkg::wide_in_resp_t),
-    .NrHives (1),
-    .NrCores (2),
-    .TCDMDepth (1024),
-    .ZeroMemorySize (64),
-    .ClusterPeriphSize (64),
-    .NrBanks (32),
-    .DMAAxiReqFifoDepth (3),
-    .DMAReqFifoDepth (3),
-    .ICacheLineWidth (snitch_cluster_pkg::ICacheLineWidth),
-    .ICacheLineCount (snitch_cluster_pkg::ICacheLineCount),
-    .ICacheSets (snitch_cluster_pkg::ICacheSets),
-    //.VMSupport (1),
-    .VMSupport (0),
-    .RVE (2'b00),
-    .RVF (2'b00),
-    .RVD (2'b00),
-    .XDivSqrt (2'b00),
-    .XF16 (2'b00),
-    .XF16ALT (2'b00),
-    .XF8 (2'b00),
-    .XF8ALT (2'b00),
-    .XFVEC (2'b00),
-    .XFDOTP (2'b00),
-    .Xdma (2'b10),
-    .Xssr (2'b00),
-    .Xfrep (2'b00),
-    .FPUImplementation (snitch_cluster_pkg::FPUImplementation),
-    .SnitchPMACfg (snitch_cluster_pkg::SnitchPMACfg),
-    .NumIntOutstandingLoads (NumIntOutstandingLoads),
-    .NumIntOutstandingMem (NumIntOutstandingMem),
-    .NumFPOutstandingLoads (NumFPOutstandingLoads),
-    .NumFPOutstandingMem (NumFPOutstandingMem),
-    .NumDTLBEntries (NumDTLBEntries),
-    .NumITLBEntries (NumITLBEntries),
-    .NumSsrsMax (0),
-    .NumSsrs (NumSsrs),
-    .SsrMuxRespDepth (SsrMuxRespDepth),
-  //  .SsrRegs (snitch_cluster_pkg::SsrRegs),
-  //  .SsrCfgs (snitch_cluster_pkg::SsrCfgs),
-    .NumSequencerInstr (NumSequencerInstr),
-    .Hive (snitch_cluster_pkg::Hive),
-    .Topology (snitch_pkg::LogarithmicInterconnect),
-    .Radix (2),
-    .RegisterOffloadReq (1),
-    .RegisterOffloadRsp (1),
-    .RegisterCoreReq (1),
-    .RegisterCoreRsp (1),
-    .RegisterTCDMCuts (0),
-    .RegisterExtWide (0),
-    .RegisterExtNarrow (0),
-    .RegisterFPUReq (0),
-    .RegisterFPUIn (0),
-    .RegisterFPUOut (0),
-    .RegisterSequencer (0),
-    .IsoCrossing (0),
-    .NarrowXbarLatency (axi_pkg::CUT_ALL_PORTS),
-    .WideXbarLatency (axi_pkg::CUT_ALL_PORTS),
-    .WideMaxMstTrans (4),
-    .WideMaxSlvTrans (4),
-    .NarrowMaxMstTrans (4),
-    .NarrowMaxSlvTrans (4),
-    .sram_cfg_t (snitch_cluster_pkg::sram_cfg_t),
-    .sram_cfgs_t (snitch_cluster_pkg::sram_cfgs_t)
+      .PhysicalAddrWidth(48),
+      .NarrowDataWidth(32),
+      .WideDataWidth(512),
+      .NarrowIdWidthIn(snitch_cluster_pkg::NarrowIdWidthIn),
+      .WideIdWidthIn(snitch_cluster_pkg::WideIdWidthIn),
+      .NarrowUserWidth(snitch_cluster_pkg::NarrowUserWidth),
+      .WideUserWidth(snitch_cluster_pkg::WideUserWidth),
+      .BootAddr(32'h1000),
+      .narrow_in_req_t(0),  //.narrow_in_req_t (snitch_cluster_pkg::narrow_in_req_t),
+      .narrow_in_resp_t(0),  //.narrow_in_resp_t (snitch_cluster_pkg::narrow_in_resp_t),
+      //  .narrow_out_req_t (snitch_cluster_pkg::narrow_out_req_t),
+      //  .narrow_out_resp_t (snitch_cluster_pkg::narrow_out_resp_t),
+      .wide_out_req_t(snitch_cluster_pkg::wide_out_req_t),
+      .wide_out_resp_t(snitch_cluster_pkg::wide_out_resp_t),
+      .wide_in_req_t(snitch_cluster_pkg::wide_in_req_t),
+      .wide_in_resp_t(snitch_cluster_pkg::wide_in_resp_t),
+      .NrHives(1),
+      .NrCores(2),
+      .TCDMDepth(1024),
+      .ZeroMemorySize(64),
+      .ClusterPeriphSize(64),
+      .NrBanks(32),
+      .DMAAxiReqFifoDepth(3),
+      .DMAReqFifoDepth(3),
+      .ICacheLineWidth(snitch_cluster_pkg::ICacheLineWidth),
+      .ICacheLineCount(snitch_cluster_pkg::ICacheLineCount),
+      .ICacheSets(snitch_cluster_pkg::ICacheSets),
+      //.VMSupport (1),
+      .VMSupport(0),
+      .RVE(2'b00),
+      .RVF(2'b00),
+      .RVD(2'b00),
+      .XDivSqrt(2'b00),
+      .XF16(2'b00),
+      .XF16ALT(2'b00),
+      .XF8(2'b00),
+      .XF8ALT(2'b00),
+      .XFVEC(2'b00),
+      .XFDOTP(2'b00),
+      .Xdma(2'b10),
+      .Xssr(2'b00),
+      .Xfrep(2'b00),
+      .FPUImplementation(snitch_cluster_pkg::FPUImplementation),
+      .SnitchPMACfg(snitch_cluster_pkg::SnitchPMACfg),
+      .NumIntOutstandingLoads(NumIntOutstandingLoads),
+      .NumIntOutstandingMem(NumIntOutstandingMem),
+      .NumFPOutstandingLoads(NumFPOutstandingLoads),
+      .NumFPOutstandingMem(NumFPOutstandingMem),
+      .NumDTLBEntries(NumDTLBEntries),
+      .NumITLBEntries(NumITLBEntries),
+      .NumSsrsMax(0),
+      .NumSsrs(NumSsrs),
+      .SsrMuxRespDepth(SsrMuxRespDepth),
+      //  .SsrRegs (snitch_cluster_pkg::SsrRegs),
+      //  .SsrCfgs (snitch_cluster_pkg::SsrCfgs),
+      .NumSequencerInstr(NumSequencerInstr),
+      .Hive(snitch_cluster_pkg::Hive),
+      .Topology(snitch_pkg::LogarithmicInterconnect),
+      .Radix(2),
+      .RegisterOffloadReq(1),
+      .RegisterOffloadRsp(1),
+      .RegisterCoreReq(1),
+      .RegisterCoreRsp(1),
+      .RegisterTCDMCuts(0),
+      .RegisterExtWide(0),
+      .RegisterExtNarrow(0),
+      .RegisterFPUReq(0),
+      .RegisterFPUIn(0),
+      .RegisterFPUOut(0),
+      .RegisterSequencer(0),
+      .IsoCrossing(0),
+      .NarrowXbarLatency(axi_pkg::CUT_ALL_PORTS),
+      .WideXbarLatency(axi_pkg::CUT_ALL_PORTS),
+      .WideMaxMstTrans(4),
+      .WideMaxSlvTrans(4),
+      .NarrowMaxMstTrans(4),
+      .NarrowMaxSlvTrans(4),
+      .sram_cfg_t(snitch_cluster_pkg::sram_cfg_t),
+      .sram_cfgs_t(snitch_cluster_pkg::sram_cfgs_t)
   ) i_cluster (
-    .clk_i,
-    .rst_ni,
-    .debug_req_i,
-    .meip_i,
-    .mtip_i,
-    .msip_i,
-    .hart_base_id_i (10'h0),
-    .cluster_base_addr_i (48'h10000000),
-    .clk_d2_bypass_i (1'b0),
-    .sram_cfgs_i (snitch_cluster_pkg::sram_cfgs_t'('0)),
-//    .narrow_in_req_i,
-//    .narrow_in_resp_o,
-//    .narrow_out_req_o,
-//    .narrow_out_resp_i,
-    .wide_out_req_o(wide_out_req_o),
-    .wide_out_resp_i(wide_out_resp_i),
-    .wide_in_req_i(0)
-//    .wide_in_resp_o
+      .clk_i,
+      .rst_ni,
+      .debug_req_i,
+      .meip_i,
+      .mtip_i,
+      .msip_i,
+      .hart_base_id_i(10'h0),
+      .cluster_base_addr_i(48'h10000000),
+      .clk_d2_bypass_i(1'b0),
+      .sram_cfgs_i(snitch_cluster_pkg::sram_cfgs_t'('0)),
+      //    .narrow_in_req_i,
+      //    .narrow_in_resp_o,
+      //    .narrow_out_req_o,
+      //    .narrow_out_resp_i,
+      .wide_out_req_o(wide_out_req_o),
+      .wide_out_resp_i(wide_out_resp_i),
+      .wide_in_req_i(0)
+      //    .wide_in_resp_o
   );
 endmodule

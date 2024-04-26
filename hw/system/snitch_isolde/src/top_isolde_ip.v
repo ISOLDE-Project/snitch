@@ -7,26 +7,18 @@ module top_isolde_ip #(
     // User parameters ends
     // Do not modify the parameters beyond this line
 
-    // Base address of targeted slave
-    parameter C_M_TARGET_SLAVE_BASE_ADDR = 32'h40000000,
-    // Burst Length. Supports 1, 2, 4, 8, 16, 32, 64, 128, 256 burst lengths
-    parameter integer C_M_AXI_BURST_LEN = 16,
-    // Thread ID Width
-    parameter integer C_M_AXI_ID_WIDTH = 1,
-    // Width of Address Bus
-    parameter integer C_M_AXI_ADDR_WIDTH = 48,
-    // Width of Data Bus
-    parameter integer C_M_AXI_DATA_WIDTH = 512,
-    // Width of User Write Address Bus
-    parameter integer C_M_AXI_AWUSER_WIDTH = 0,
-    // Width of User Read Address Bus
-    parameter integer C_M_AXI_ARUSER_WIDTH = 0,
-    // Width of User Write Data Bus
-    parameter integer C_M_AXI_WUSER_WIDTH = 0,
-    // Width of User Read Data Bus
-    parameter integer C_M_AXI_RUSER_WIDTH = 0,
-    // Width of User Response Bus
-    parameter integer C_M_AXI_BUSER_WIDTH = 0
+		// Parameters of Axi Master Bus Interface M_AXI_WIDE
+		parameter  C_M_AXI_WIDE_TARGET_SLAVE_BASE_ADDR	= 32'h40000000,
+		parameter integer C_M_AXI_WIDE_BURST_LEN	= 16,
+		parameter integer C_M_AXI_WIDE_ID_WIDTH	= 3,
+		parameter integer C_M_AXI_WIDE_ADDR_WIDTH	= 48,
+		parameter integer C_M_AXI_WIDE_DATA_WIDTH	= 512,
+		parameter integer C_M_AXI_WIDE_AWUSER_WIDTH	= 1,
+		parameter integer C_M_AXI_WIDE_ARUSER_WIDTH	= 1,
+		parameter integer C_M_AXI_WIDE_WUSER_WIDTH	= 1,
+		parameter integer C_M_AXI_WIDE_RUSER_WIDTH	= 1,
+		parameter integer C_M_AXI_WIDE_BUSER_WIDTH	= 1
+  
 ) (
     // Users to add ports here
     //input  wire                        clk_i,
@@ -38,132 +30,54 @@ module top_isolde_ip #(
 
     // User ports ends
     // Do not modify the ports beyond this line
+		input wire  m_axi_wide_init_axi_txn,
+		output wire  m_axi_wide_txn_done,
+		output wire  m_axi_wide_error,
+		input wire  m_axi_wide_aclk,
+		input wire  m_axi_wide_aresetn,
+		output wire [C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_awid,
+		output wire [C_M_AXI_WIDE_ADDR_WIDTH-1 : 0] m_axi_wide_awaddr,
+		output wire [7 : 0] m_axi_wide_awlen,
+		output wire [2 : 0] m_axi_wide_awsize,
+		output wire [1 : 0] m_axi_wide_awburst,
+		output wire  m_axi_wide_awlock,
+		output wire [3 : 0] m_axi_wide_awcache,
+		output wire [2 : 0] m_axi_wide_awprot,
+		output wire [3 : 0] m_axi_wide_awqos,
+		output wire [C_M_AXI_WIDE_AWUSER_WIDTH-1 : 0] m_axi_wide_awuser,
+		output wire  m_axi_wide_awvalid,
+		input wire  m_axi_wide_awready,
+		output wire [C_M_AXI_WIDE_DATA_WIDTH-1 : 0] m_axi_wide_wdata,
+		output wire [C_M_AXI_WIDE_DATA_WIDTH/8-1 : 0] m_axi_wide_wstrb,
+		output wire  m_axi_wide_wlast,
+		output wire [C_M_AXI_WIDE_WUSER_WIDTH-1 : 0] m_axi_wide_wuser,
+		output wire  m_axi_wide_wvalid,
+		input wire  m_axi_wide_wready,
+		input wire [C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_bid,
+		input wire [1 : 0] m_axi_wide_bresp,
+		input wire [C_M_AXI_WIDE_BUSER_WIDTH-1 : 0] m_axi_wide_buser,
+		input wire  m_axi_wide_bvalid,
+		output wire  m_axi_wide_bready,
+		output wire [C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_arid,
+		output wire [C_M_AXI_WIDE_ADDR_WIDTH-1 : 0] m_axi_wide_araddr,
+		output wire [7 : 0] m_axi_wide_arlen,
+		output wire [2 : 0] m_axi_wide_arsize,
+		output wire [1 : 0] m_axi_wide_arburst,
+		output wire  m_axi_wide_arlock,
+		output wire [3 : 0] m_axi_wide_arcache,
+		output wire [2 : 0] m_axi_wide_arprot,
+		output wire [3 : 0] m_axi_wide_arqos,
+		output wire [C_M_AXI_WIDE_ARUSER_WIDTH-1 : 0] m_axi_wide_aruser,
+		output wire  m_axi_wide_arvalid,
+		input wire  m_axi_wide_arready,
+		input wire [C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_rid,
+		input wire [C_M_AXI_WIDE_DATA_WIDTH-1 : 0] m_axi_wide_rdata,
+		input wire [1 : 0] m_axi_wide_rresp,
+		input wire  m_axi_wide_rlast,
+		input wire [C_M_AXI_WIDE_RUSER_WIDTH-1 : 0] m_axi_wide_ruser,
+		input wire  m_axi_wide_rvalid,
+		output wire  m_axi_wide_rready
 
-    // Initiate AXI transactions
-    input wire INIT_AXI_TXN,
-    // Asserts when transaction is complete
-    output wire TXN_DONE,
-    // Asserts when ERROR is detected
-    output reg ERROR,
-    // Global Clock Signal.
-    input wire M_AXI_ACLK,
-    // Global Reset Singal. This Signal is Active Low
-    input wire M_AXI_ARESETN,
-    //************************
-    // Master Interface Write Address ID
-    output wire [C_M_AXI_ID_WIDTH-1 : 0] M_AXI_AWID,
-    // Master Interface Write Address
-    output wire [C_M_AXI_ADDR_WIDTH-1 : 0] M_AXI_AWADDR,
-    // Burst length. The burst length gives the exact number of transfers in a burst
-    output wire [7 : 0] M_AXI_AWLEN,
-    // Burst size. This signal indicates the size of each transfer in the burst
-    output wire [2 : 0] M_AXI_AWSIZE,
-    // Burst type. The burst type and the size information, 
-    // determine how the address for each transfer within the burst is calculated.
-    output wire [1 : 0] M_AXI_AWBURST,
-    // Lock type. Provides additional information about the
-    // atomic characteristics of the transfer.
-    output wire M_AXI_AWLOCK,
-    // Memory type. This signal indicates how transactions
-    // are required to progress through a system.
-    output wire [3 : 0] M_AXI_AWCACHE,
-    // Protection type. This signal indicates the privilege
-    // and security level of the transaction, and whether
-    // the transaction is a data access or an instruction access.
-    output wire [2 : 0] M_AXI_AWPROT,
-    // Quality of Service, QoS identifier sent for each write transaction.
-    output wire [3 : 0] M_AXI_AWQOS,
-    //
-    output wire [3 : 0] M_AXI_AWREGION,
-    //
-    output wire [5 : 0] M_AXIAWATOP,
-    // Optional User-defined signal in the write address channel.
-    output wire [C_M_AXI_AWUSER_WIDTH-1 : 0] M_AXI_AWUSER,
-    //************************************** 
-
-    // Write address valid. This signal indicates that
-    // the channel is signaling valid write address and control information.
-    output wire M_AXI_AWVALID,
-    // Write address ready. This signal indicates that
-    // the slave is ready to accept an address and associated control signals
-    input wire M_AXI_AWREADY,
-    // Master Interface Write Data.
-    output wire [C_M_AXI_DATA_WIDTH-1 : 0] M_AXI_WDATA,
-    // Write strobes. This signal indicates which byte
-    // lanes hold valid data. There is one write strobe
-    // bit for each eight bits of the write data bus.
-    output wire [C_M_AXI_DATA_WIDTH/8-1 : 0] M_AXI_WSTRB,
-    // Write last. This signal indicates the last transfer in a write burst.
-    output wire M_AXI_WLAST,
-    // Optional User-defined signal in the write data channel.
-    output wire [C_M_AXI_WUSER_WIDTH-1 : 0] M_AXI_WUSER,
-    // Write valid. This signal indicates that valid write
-    // data and strobes are available
-    output wire M_AXI_WVALID,
-    // Write ready. This signal indicates that the slave
-    // can accept the write data.
-    input wire M_AXI_WREADY,
-    // Master Interface Write Response.
-    input wire [C_M_AXI_ID_WIDTH-1 : 0] M_AXI_BID,
-    // Write response. This signal indicates the status of the write transaction.
-    input wire [1 : 0] M_AXI_BRESP,
-    // Optional User-defined signal in the write response channel
-    input wire [C_M_AXI_BUSER_WIDTH-1 : 0] M_AXI_BUSER,
-    // Write response valid. This signal indicates that the
-    // channel is signaling a valid write response.
-    input wire M_AXI_BVALID,
-    // Response ready. This signal indicates that the master
-    // can accept a write response.
-    output wire M_AXI_BREADY,
-    // Master Interface Read Address.
-    output wire [C_M_AXI_ID_WIDTH-1 : 0] M_AXI_ARID,
-    // Read address. This signal indicates the initial
-    // address of a read burst transaction.
-    output wire [C_M_AXI_ADDR_WIDTH-1 : 0] M_AXI_ARADDR,
-    // Burst length. The burst length gives the exact number of transfers in a burst
-    output wire [7 : 0] M_AXI_ARLEN,
-    // Burst size. This signal indicates the size of each transfer in the burst
-    output wire [2 : 0] M_AXI_ARSIZE,
-    // Burst type. The burst type and the size information, 
-    // determine how the address for each transfer within the burst is calculated.
-    output wire [1 : 0] M_AXI_ARBURST,
-    // Lock type. Provides additional information about the
-    // atomic characteristics of the transfer.
-    output wire M_AXI_ARLOCK,
-    // Memory type. This signal indicates how transactions
-    // are required to progress through a system.
-    output wire [3 : 0] M_AXI_ARCACHE,
-    // Protection type. This signal indicates the privilege
-    // and security level of the transaction, and whether
-    // the transaction is a data access or an instruction access.
-    output wire [2 : 0] M_AXI_ARPROT,
-    // Quality of Service, QoS identifier sent for each read transaction
-    output wire [3 : 0] M_AXI_ARQOS,
-    // Optional User-defined signal in the read address channel.
-    output wire [C_M_AXI_ARUSER_WIDTH-1 : 0] M_AXI_ARUSER,
-    // Write address valid. This signal indicates that
-    // the channel is signaling valid read address and control information
-    output wire M_AXI_ARVALID,
-    // Read address ready. This signal indicates that
-    // the slave is ready to accept an address and associated control signals
-    input wire M_AXI_ARREADY,
-    // Read ID tag. This signal is the identification tag
-    // for the read data group of signals generated by the slave.
-    input wire [C_M_AXI_ID_WIDTH-1 : 0] M_AXI_RID,
-    // Master Read Data
-    input wire [C_M_AXI_DATA_WIDTH-1 : 0] M_AXI_RDATA,
-    // Read response. This signal indicates the status of the read transfer
-    input wire [1 : 0] M_AXI_RRESP,
-    // Read last. This signal indicates the last transfer in a read burst
-    input wire M_AXI_RLAST,
-    // Optional User-defined signal in the read address channel.
-    input wire [C_M_AXI_RUSER_WIDTH-1 : 0] M_AXI_RUSER,
-    // Read valid. This signal indicates that the channel
-    // is signaling the required read data.
-    input wire M_AXI_RVALID,
-    // Read ready. This signal indicates that the master can
-    // accept the read data and response information.
-    output wire M_AXI_RREADY
 );
 
 
@@ -194,8 +108,8 @@ module top_isolde_ip #(
       .debug_req_i(debug_req_i),
       .meip_i(meip_i),
       .mtip_i(mtip_i),
-      .msip_i(msip_i),
-      .axi_awaddr(M_AXI_AWADDR)
+      .msip_i(msip_i)
+      //.axi_awaddr(M_AXI_AWADDR)
       //.wide_out_req_o(aw_chan_tmp),
       //.wide_out_resp_i(0),
       //.wide_in_req_i(0)
