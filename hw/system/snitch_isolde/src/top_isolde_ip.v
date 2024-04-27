@@ -80,41 +80,35 @@ module top_isolde_ip #(
 
 );
 
-
-  localparam aw_chan_width = C_M_AXI_ID_WIDTH+C_M_AXI_ADDR_WIDTH+8+3+3+3+4+3+4+4+6+C_M_AXI_AWUSER_WIDTH;
-  wire [aw_chan_width:0] aw_chan_tmp;
-  assign aw_chan_tmp = {
-    M_AXI_AWID,
-    M_AXI_AWADDR,
-    M_AXI_AWLEN,
-    M_AXI_AWSIZE,
-    M_AXI_AWBURST,
-    M_AXI_AWLOCK,
-    M_AXI_AWCACHE,
-    M_AXI_AWPROT,
-    M_AXI_AWQOS,
-    M_AXI_AWREGION,
-    M_AXIAWATOP,
-    M_AXI_AWUSER
-  };
-
-
-
-
   // Add user logic here
   snitch_cluster_wrapper(
-      .clk_i(M_AXI_ACLK),
-      .rst_ni(M_AXI_ARESETN),
+      .clk_i(m_axi_wide_aclk),
+      .rst_ni(m_axi_wide_aresetn),
       .debug_req_i(debug_req_i),
       .meip_i(meip_i),
       .mtip_i(mtip_i),
-      .msip_i(msip_i)
+      .msip_i(msip_i),
+      .aw({
+      	m_axi_wide_awid,
+		m_axi_wide_awaddr,
+		m_axi_wide_awlen,
+		m_axi_wide_awsize,
+		m_axi_wide_awburst,
+		m_axi_wide_awlock,
+		m_axi_wide_awcache,
+		m_axi_wide_awprot,
+		m_axi_wide_awqos,
+		10'b0,
+		m_axi_wide_awuser
+      })
+     
       //.axi_awaddr(M_AXI_AWADDR)
       //.wide_out_req_o(aw_chan_tmp),
       //.wide_out_resp_i(0),
       //.wide_in_req_i(0)
       //.wide_in_resp_o(0)
   );
+
 
   // User logic ends
 
