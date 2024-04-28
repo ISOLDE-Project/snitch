@@ -12,9 +12,80 @@
 
 
 `include "axi/typedef.svh"
+//`include "axi/assign.svh"
+`define __AXI_TO_AW(__opt_as, __lhs, __lhs_sep, __rhs, __rhs_sep)   \
+  __opt_as __lhs``__lhs_sep``id     = __rhs``__rhs_sep``id;         \
+  __opt_as __lhs``__lhs_sep``addr   = __rhs``__rhs_sep``addr;       \
+  __opt_as __lhs``__lhs_sep``len    = __rhs``__rhs_sep``len;        \
+  __opt_as __lhs``__lhs_sep``size   = __rhs``__rhs_sep``size;       \
+  __opt_as __lhs``__lhs_sep``burst  = __rhs``__rhs_sep``burst;      \
+  __opt_as __lhs``__lhs_sep``lock   = __rhs``__rhs_sep``lock;       \
+  __opt_as __lhs``__lhs_sep``cache  = __rhs``__rhs_sep``cache;      \
+  __opt_as __lhs``__lhs_sep``prot   = __rhs``__rhs_sep``prot;       \
+  __opt_as __lhs``__lhs_sep``qos    = __rhs``__rhs_sep``qos;        \
+ // __opt_as __lhs``__lhs_sep``region = __rhs``__rhs_sep``region;     \
+ // __opt_as __lhs``__lhs_sep``atop   = __rhs``__rhs_sep``atop;       \
+  __opt_as __lhs``__lhs_sep``user   = __rhs``__rhs_sep``user;
+`define __AXI_TO_W(__opt_as, __lhs, __lhs_sep, __rhs, __rhs_sep)    \
+  __opt_as __lhs``__lhs_sep``data   = __rhs``__rhs_sep``data;       \
+  __opt_as __lhs``__lhs_sep``strb   = __rhs``__rhs_sep``strb;       \
+  __opt_as __lhs``__lhs_sep``last   = __rhs``__rhs_sep``last;       \
+  __opt_as __lhs``__lhs_sep``user   = __rhs``__rhs_sep``user;
+`define __AXI_TO_B(__opt_as, __lhs, __lhs_sep, __rhs, __rhs_sep)    \
+  __opt_as __lhs``__lhs_sep``id     = __rhs``__rhs_sep``id;         \
+  __opt_as __lhs``__lhs_sep``resp   = __rhs``__rhs_sep``resp;       \
+  __opt_as __lhs``__lhs_sep``user   = __rhs``__rhs_sep``user;
+`define __AXI_TO_AR(__opt_as, __lhs, __lhs_sep, __rhs, __rhs_sep)   \
+  __opt_as __lhs``__lhs_sep``id     = __rhs``__rhs_sep``id;         \
+  __opt_as __lhs``__lhs_sep``addr   = __rhs``__rhs_sep``addr;       \
+  __opt_as __lhs``__lhs_sep``len    = __rhs``__rhs_sep``len;        \
+  __opt_as __lhs``__lhs_sep``size   = __rhs``__rhs_sep``size;       \
+  __opt_as __lhs``__lhs_sep``burst  = __rhs``__rhs_sep``burst;      \
+  __opt_as __lhs``__lhs_sep``lock   = __rhs``__rhs_sep``lock;       \
+  __opt_as __lhs``__lhs_sep``cache  = __rhs``__rhs_sep``cache;      \
+  __opt_as __lhs``__lhs_sep``prot   = __rhs``__rhs_sep``prot;       \
+  __opt_as __lhs``__lhs_sep``qos    = __rhs``__rhs_sep``qos;        \
+ // __opt_as __lhs``__lhs_sep``region = __rhs``__rhs_sep``region;     \
+  __opt_as __lhs``__lhs_sep``user   = __rhs``__rhs_sep``user;
+`define __AXI_TO_R(__opt_as, __lhs, __lhs_sep, __rhs, __rhs_sep)    \
+  __opt_as __lhs``__lhs_sep``id     = __rhs``__rhs_sep``id;         \
+  __opt_as __lhs``__lhs_sep``data   = __rhs``__rhs_sep``data;       \
+  __opt_as __lhs``__lhs_sep``resp   = __rhs``__rhs_sep``resp;       \
+  __opt_as __lhs``__lhs_sep``last   = __rhs``__rhs_sep``last;       \
+  __opt_as __lhs``__lhs_sep``user   = __rhs``__rhs_sep``user;
+
+`define __AXI_TO_REQ( __lhs, __rhs)    \
+  `__AXI_TO_AW(assign,__lhs``.aw,.,__rhs``_aw, )    \
+   assign __lhs``.aw_valid = __rhs``_awvalid;                         \
+  `__AXI_TO_W (assign,__lhs``.w, .,__rhs``_w,  )    \
+    assign __lhs``.w_valid = __rhs``_wvalid;                           \
+  assign __lhs``.b_ready = __rhs``_bready;                           \
+  `__AXI_TO_AR(assign,__lhs``.ar,.,__rhs``_ar, )    \
+    assign __lhs``.ar_valid = __rhs``_arvalid;                         \
+  assign __lhs``.r_ready = __rhs``_rready;
+
+`define __AXI_TO_RESP( __lhs, __rhs)                               \
+  assign __lhs``.aw_ready = __rhs``_awready;                         \
+  assign __lhs``.ar_ready = __rhs``_arready;                         \
+  assign __lhs``.w_ready = __rhs``_wready;                           \
+  assign __lhs``.b_valid = __rhs``_bvalid;                           \
+  `__AXI_TO_B(assign, wide_out_resp_i.b, ., m_axi_wide_b, )         \
+  assign __lhs``.r_valid = __rhs``_rvalid;                            \
+  `__AXI_TO_R(assign, wide_out_resp_i.r, ., m_axi_wide_r, )   
 
 // verilog_lint: waive-start package-filename
 package snitch_cluster_pkg;
+
+//top AXI WIDE confi
+		localparam int unsigned C_M_AXI_WIDE_BURST_LEN	= 16;
+		localparam int unsigned C_M_AXI_WIDE_ID_WIDTH	= 3;
+		localparam int unsigned C_M_AXI_WIDE_ADDR_WIDTH	= 48;
+		localparam int unsigned C_M_AXI_WIDE_DATA_WIDTH	= 512;
+		localparam int unsigned C_M_AXI_WIDE_AWUSER_WIDTH	= 1;
+		localparam int unsigned C_M_AXI_WIDE_ARUSER_WIDTH	= 1;
+		localparam int unsigned C_M_AXI_WIDE_WUSER_WIDTH	= 1;
+		localparam int unsigned C_M_AXI_WIDE_RUSER_WIDTH	= 1;
+		localparam int unsigned C_M_AXI_WIDE_BUSER_WIDTH	= 1;
 
   localparam int unsigned NrCores = 2;
   localparam int unsigned NrHives = 1;
@@ -208,29 +279,62 @@ endpackage
 // verilog_lint: waive-stop package-filename
 
 module  snitch_cluster_wrapper (
-    input  logic                                                                    clk_i,
-    input  logic                                                                    rst_ni,
+    //input  logic                                                                    clk_i,
+    //input  logic                                                                    rst_ni,
     input  logic                                  [snitch_cluster_pkg::NrCores-1:0] debug_req_i,
     input  logic                                  [snitch_cluster_pkg::NrCores-1:0] meip_i,
     input  logic                                  [snitch_cluster_pkg::NrCores-1:0] mtip_i,
     input  logic                                  [snitch_cluster_pkg::NrCores-1:0] msip_i,
-    //request
-    output snitch_cluster_pkg::wide_out_aw_chan_t                                   aw,
-    output logic                                                                    aw_valid,
-    output snitch_cluster_pkg::wide_out_w_chan_t                                    w,
-    output logic                                                                    w_valid,
-    output logic                                                                    b_ready,
-    output snitch_cluster_pkg::wide_out_ar_chan_t                                   ar,
-    output logic                                                                    ar_valid,
-    output logic                                                                    r_ready,
-    //response
-    input  logic                                                                    aw_ready,
-    input  logic                                                                    ar_ready,
-    input  logic                                                                    w_ready,
-    input  logic                                                                    b_valid,
-    input  snitch_cluster_pkg::wide_out_b_chan_t                                    b,
-    input  logic                                                                    r_valid,
-    input  snitch_cluster_pkg::wide_out_r_chan_t                                    r
+//********* M_AXI_WIDE
+ // Do not modify the ports beyond this line
+		input logic  m_axi_wide_init_axi_txn,
+		output logic  m_axi_wide_txn_done,
+		output logic  m_axi_wide_error,
+		input logic  m_axi_wide_aclk,
+		input logic  m_axi_wide_aresetn,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_awid,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ADDR_WIDTH-1 : 0] m_axi_wide_awaddr,
+		output logic [7 : 0] m_axi_wide_awlen,
+		output logic [2 : 0] m_axi_wide_awsize,
+		output logic [1 : 0] m_axi_wide_awburst,
+		output logic  m_axi_wide_awlock,
+		output logic [3 : 0] m_axi_wide_awcache,
+		output logic [2 : 0] m_axi_wide_awprot,
+		output logic [3 : 0] m_axi_wide_awqos,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_AWUSER_WIDTH-1 : 0] m_axi_wide_awuser,
+		output logic  m_axi_wide_awvalid,
+		input logic  m_axi_wide_awready,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_DATA_WIDTH-1 : 0] m_axi_wide_wdata,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_DATA_WIDTH/8-1 : 0] m_axi_wide_wstrb,
+		output logic  m_axi_wide_wlast,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_WUSER_WIDTH-1 : 0] m_axi_wide_wuser,
+		output logic  m_axi_wide_wvalid,
+		input logic  m_axi_wide_wready,
+		input logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_bid,
+		input logic [1 : 0] m_axi_wide_bresp,
+		input logic [ snitch_cluster_pkg::C_M_AXI_WIDE_BUSER_WIDTH-1 : 0] m_axi_wide_buser,
+		input logic  m_axi_wide_bvalid,
+		output logic  m_axi_wide_bready,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_arid,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ADDR_WIDTH-1 : 0] m_axi_wide_araddr,
+		output logic [7 : 0] m_axi_wide_arlen,
+		output logic [2 : 0] m_axi_wide_arsize,
+		output logic [1 : 0] m_axi_wide_arburst,
+		output logic  m_axi_wide_arlock,
+		output logic [3 : 0] m_axi_wide_arcache,
+		output logic [2 : 0] m_axi_wide_arprot,
+		output logic [3 : 0] m_axi_wide_arqos,
+		output logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ARUSER_WIDTH-1 : 0] m_axi_wide_aruser,
+		output logic  m_axi_wide_arvalid,
+		input logic  m_axi_wide_arready,
+		input logic [ snitch_cluster_pkg::C_M_AXI_WIDE_ID_WIDTH-1 : 0] m_axi_wide_rid,
+		input logic [ snitch_cluster_pkg::C_M_AXI_WIDE_DATA_WIDTH-1 : 0] m_axi_wide_rdata,
+		input logic [1 : 0] m_axi_wide_rresp,
+		input logic  m_axi_wide_rlast,
+		input logic [ snitch_cluster_pkg::C_M_AXI_WIDE_RUSER_WIDTH-1 : 0] m_axi_wide_ruser,
+		input logic  m_axi_wide_rvalid,
+		output logic  m_axi_wide_rready
+//*********************
     //  input  snitch_cluster_pkg::narrow_in_req_t     narrow_in_req_i,
     //  output snitch_cluster_pkg::narrow_in_resp_t    narrow_in_resp_o,
     //  output snitch_cluster_pkg::narrow_out_req_t    narrow_out_req_o,
@@ -254,23 +358,33 @@ module  snitch_cluster_wrapper (
   snitch_cluster_pkg::wide_out_req_t  wide_out_req_o;
   snitch_cluster_pkg::wide_out_resp_t wide_out_resp_i;
 
-  //request
-  assign wide_out_req_o.aw        = aw;
-  assign wide_out_req_o.aw_valid  = aw_valid;
-  assign wide_out_req_o.w         = w;
-  assign wide_out_req_o.w_valid   = w_valid;
-  assign wide_out_req_o.b_ready   = b_ready;
-  assign wide_out_req_o.ar        = ar;
-  assign wide_out_req_o.ar_valid  = ar_valid;
-  assign wide_out_req_o.r_ready   = r_ready;
+`__AXI_TO_REQ(wide_out_req_o,m_axi_wide)
+
+//   `__AXI_TO_AW(assign,wide_out_req_o.aw,.,m_axi_wide_aw, )
+//   `__AXI_TO_W(assign,wide_out_req_o.w,.,m_axi_wide_w, )
+//   `__AXI_TO_AR(assign,wide_out_req_o.ar,.,m_axi_wide_ar, )
   //response
-  assign wide_out_resp_i.aw_ready = aw_ready;
-  assign wide_out_resp_i.ar_ready = ar_ready;
-  assign wide_out_resp_i.w_ready  = w_ready;
-  assign wide_out_resp_i.b_valid  = b_valid;
-  assign wide_out_resp_i.b        = b;
-  assign wide_out_resp_i.r_valid  = r_valid;
-  assign wide_out_resp_i.r        = r;
+  `__AXI_TO_RESP(wide_out_resp_i, m_axi_wide) 
+  // `__AXI_TO_B(assign, wide_out_resp_i.b, ., m_axi_wide_b, )     
+  // //__opt_as __lhs.r_valid = __rhs.r_valid;                           \
+  // `__AXI_TO_R(assign, wide_out_resp_i.r, ., m_axi_wide_r, )   
+  //request
+  //assign wide_out_req_o.aw        = aw;
+//   assign wide_out_req_o.aw_valid  = aw_valid;
+//   assign wide_out_req_o.w         = w;
+//   assign wide_out_req_o.w_valid   = w_valid;
+//   assign wide_out_req_o.b_ready   = b_ready;
+//   assign wide_out_req_o.ar        = ar;
+//   assign wide_out_req_o.ar_valid  = ar_valid;
+//   assign wide_out_req_o.r_ready   = r_ready;
+  //response
+//   assign wide_out_resp_i.aw_ready = aw_ready;
+//   assign wide_out_resp_i.ar_ready = ar_ready;
+//   assign wide_out_resp_i.w_ready  = w_ready;
+//   assign wide_out_resp_i.b_valid  = b_valid;
+//   assign wide_out_resp_i.b        = b;
+//   assign wide_out_resp_i.r_valid  = r_valid;
+//   assign wide_out_resp_i.r        = r;
 
   // Snitch cluster under test.
   snitch_cluster #(
@@ -354,8 +468,8 @@ module  snitch_cluster_wrapper (
       .sram_cfg_t(snitch_cluster_pkg::sram_cfg_t),
       .sram_cfgs_t(snitch_cluster_pkg::sram_cfgs_t)
   ) i_cluster (
-      .clk_i,
-      .rst_ni,
+      .clk_i(m_axi_wide_aclk),
+      .rst_ni(m_axi_wide_aresetn),
       .debug_req_i,
       .meip_i,
       .mtip_i,
