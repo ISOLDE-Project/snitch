@@ -1,12 +1,4 @@
-
-`timescale 1 ns / 1 ps
-
 module top_isolde_ip #(
-    // Users to add parameters here
-    parameter NrCores = 2,
-    // User parameters ends
-    // Do not modify the parameters beyond this line
-
 		// Parameters of Axi Master Bus Interface M_AXI_WIDE
 		parameter  C_M_AXI_WIDE_TARGET_SLAVE_BASE_ADDR	= 32'h40000000,
 		parameter integer C_M_AXI_WIDE_BURST_LEN	= 16,
@@ -18,18 +10,9 @@ module top_isolde_ip #(
 		parameter integer C_M_AXI_WIDE_WUSER_WIDTH	= 1,
 		parameter integer C_M_AXI_WIDE_RUSER_WIDTH	= 1,
 		parameter integer C_M_AXI_WIDE_BUSER_WIDTH	= 1
-  
 ) (
-    // Users to add ports here
-    //input  wire                        clk_i,
-    //input  wire                        rst_ni,
-    input wire [NrCores-1:0] debug_req_i,
-    input wire [NrCores-1:0] meip_i,
-    input wire [NrCores-1:0] mtip_i,
-    input wire [NrCores-1:0] msip_i,
-
-    // User ports ends
-    // Do not modify the ports beyond this line
+//********* M_AXI_WIDE
+ // Do not modify the ports beyond this line
 		input wire  m_axi_wide_init_axi_txn,
 		output wire  m_axi_wide_txn_done,
 		output wire  m_axi_wide_error,
@@ -77,39 +60,58 @@ module top_isolde_ip #(
 		input wire [C_M_AXI_WIDE_RUSER_WIDTH-1 : 0] m_axi_wide_ruser,
 		input wire  m_axi_wide_rvalid,
 		output wire  m_axi_wide_rready
-
+//*********************
 );
-
-  // Add user logic here
-  snitch_cluster_wrapper(
-      .clk_i(m_axi_wide_aclk),
-      .rst_ni(m_axi_wide_aresetn),
-      .debug_req_i(debug_req_i),
-      .meip_i(meip_i),
-      .mtip_i(mtip_i),
-      .msip_i(msip_i),
-      .aw({
-      	m_axi_wide_awid,
-		m_axi_wide_awaddr,
-		m_axi_wide_awlen,
-		m_axi_wide_awsize,
-		m_axi_wide_awburst,
-		m_axi_wide_awlock,
-		m_axi_wide_awcache,
-		m_axi_wide_awprot,
-		m_axi_wide_awqos,
-		10'b0,
-		m_axi_wide_awuser
-      })
-     
-      //.axi_awaddr(M_AXI_AWADDR)
-      //.wide_out_req_o(aw_chan_tmp),
-      //.wide_out_resp_i(0),
-      //.wide_in_req_i(0)
-      //.wide_in_resp_o(0)
+ // Add user wire here
+  snitch_cluster_wrapper ip_cluster(
+	.m_axi_wide_error(m_axi_wide_error),
+	.m_axi_wide_aclk(m_axi_wide_aclk),
+	.m_axi_wide_aresetn(m_axi_wide_aresetn),
+	.m_axi_wide_awid(m_axi_wide_awid),
+	.m_axi_wide_awaddr(m_axi_wide_awaddr),
+	.m_axi_wide_awlen(m_axi_wide_awlen),
+	.m_axi_wide_awsize(m_axi_wide_awsize),
+	.m_axi_wide_awburst(m_axi_wide_awburst),
+	.m_axi_wide_awlock(m_axi_wide_awlock),
+	.m_axi_wide_awcache(m_axi_wide_awcache),
+	.m_axi_wide_awprot(m_axi_wide_awprot),
+	.m_axi_wide_awqos(m_axi_wide_awqos),
+	.m_axi_wide_awuser(m_axi_wide_awuser),
+	.m_axi_wide_awvalid(m_axi_wide_awvalid),
+	.m_axi_wide_awready(m_axi_wide_awready),
+	.m_axi_wide_wdata(m_axi_wide_wdata),
+	.m_axi_wide_wstrb(m_axi_wide_wstrb),		
+	.m_axi_wide_wlast(m_axi_wide_wlast),
+	.m_axi_wide_wuser(m_axi_wide_wuser),
+	.m_axi_wide_wvalid(m_axi_wide_wvalid),
+	.m_axi_wide_wready(m_axi_wide_wready),
+	.m_axi_wide_bid(m_axi_wide_bid),
+	.m_axi_wide_bresp(m_axi_wide_bresp),
+	.m_axi_wide_buser(m_axi_wide_buser),
+	.m_axi_wide_bvalid(m_axi_wide_bvalid),
+	.m_axi_wide_bready(m_axi_wide_bready),
+	.m_axi_wide_arid(m_axi_wide_arid),
+	.m_axi_wide_araddr(m_axi_wide_araddr),
+	.m_axi_wide_arlen(m_axi_wide_arlen),
+	.m_axi_wide_arsize(m_axi_wide_arsize),
+	.m_axi_wide_arburst(m_axi_wide_arburst),
+	.m_axi_wide_arlock(m_axi_wide_arlock),
+	.m_axi_wide_arcache(m_axi_wide_arcache),
+	.m_axi_wide_arprot(m_axi_wide_arprot),
+	.m_axi_wide_arqos(m_axi_wide_arqos),
+	.m_axi_wide_aruser(m_axi_wide_aruser),
+	.m_axi_wide_arvalid(m_axi_wide_arvalid),
+	.m_axi_wide_arready(m_axi_wide_arready),
+	.m_axi_wide_rid(m_axi_wide_rid),
+	.m_axi_wide_rdata(m_axi_wide_rdata),
+	.m_axi_wide_rresp(m_axi_wide_rresp),
+	.m_axi_wide_rlast(m_axi_wide_rlast),
+	.m_axi_wide_ruser(m_axi_wide_ruser),
+	.m_axi_wide_rvalid(m_axi_wide_rvalid),
+	.m_axi_wide_rready(m_axi_wide_rready)
   );
 
 
-  // User logic ends
+  // User wire ends
 
 endmodule

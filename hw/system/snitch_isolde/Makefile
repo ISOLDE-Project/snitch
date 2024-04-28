@@ -315,7 +315,9 @@ $(GENERATED_DIR)/sources.tcl: Bender.yml $(CFG) Makefile
 
 vivado-lint: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
 	rm -rf vivado && mkdir -p vivado
-	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >launch_runs.tcl
+	@echo "set_property elab_link_dcps false [current_fileset]" >launch_runs.tcl
+	@echo "set_property elab_load_timing_constraints false [current_fileset]" >>launch_runs.tcl
+	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
 vivado-synth: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
@@ -323,5 +325,7 @@ vivado-synth: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/source
 	@echo "launch_runs synth_1 " >launch_runs.tcl
 	@echo "wait_on_runs synth_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
+
+#ipx::package_project -root_dir /mnt/m2/hdd2/ISOLDE-project/snitch/hw/system/ip_repo -vendor user.org -library user -taxonomy /UserIP -import_files	
 
 generate:  $(GENERATED_DIR)/snitch_cluster_wrapper.sv
