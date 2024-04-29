@@ -49,6 +49,12 @@ def main():
     parser.add_argument("--wrapper",
                         action="store_true",
                         help="Generate Snitch cluster wrapper")
+    parser.add_argument("--top-v",
+                        action="store_true",
+                        help="Name of Verilog top-level file (output).")
+    parser.add_argument("--wrapper-axi",
+                        action="store_true",
+                        help="Name of System Verilog wrapper file (output).")
     parser.add_argument("--linker",
                         action="store_true",
                         help="Generate linker script")
@@ -87,7 +93,15 @@ def main():
 
     if args.wrapper:
         with open(outdir / "snitch_cluster_wrapper.sv", "w") as f:
-            f.write(cluster_tb.render_wrapper())
+            f.write(cluster_tb.render_wrapper('wrapper'))
+
+    if args.top_v:
+        with open(outdir / "top_isolde_ip.v", "w") as f:
+            f.write(cluster_tb.render_wrapper('top-v'))
+
+    if args.wrapper_axi:
+        with open(outdir / "snitch_cluster_wrapper_axi.sv", "w") as f:
+            f.write(cluster_tb.render_wrapper('wrapper-axi'))        
 
     if args.linker:
         with open(outdir / "link.ld", "w") as f:
