@@ -149,7 +149,9 @@ class SnitchCluster(Generator):
     """
     files = {
         'cfg': "src/snitch_cfg.sv.tpl",
-        'wrapper': "src/snitch_cluster_wrapper.sv.tpl"
+        'wrapper': "src/snitch_cluster_wrapper.sv.tpl",
+        'wrapper-axi': "src/snitch_cluster_wrapper_axi.sv.tpl",
+        'top-v': "src/top_isolde_ip.v.tpl"
     }
 
     def __init__(self, cfg, pma_cfg):
@@ -176,9 +178,9 @@ class SnitchCluster(Generator):
         """Return L1 Region as tuple. Base and length."""
         return (self.cfg['cluster_base_addr'], self.cfg['tcdm']['size'])
 
-    def render_wrapper(self):
+    def render_wrapper(self,key):
         """Render the cluster wrapper"""
-        cfg_template = self.templates.get_template(self.files['wrapper'])
+        cfg_template = self.templates.get_template(self.files[key])
         return cfg_template.render_unicode(cfg=self.cfg,
                                            to_sv_hex=to_sv_hex,
                                            disclaimer=self.DISCLAIMER)
@@ -380,8 +382,8 @@ class SnitchClusterTB(Generator):
         # Store Snitch cluster config in separate variable
         self.cluster = SnitchCluster(cfg["cluster"], pma_cfg)
 
-    def render_wrapper(self):
-        return self.cluster.render_wrapper()
+    def render_wrapper(self,tpl_id):
+        return self.cluster.render_wrapper(tpl_id)
 
     def render_linker_script(self):
         """Generate a linker script for the cluster testbench"""

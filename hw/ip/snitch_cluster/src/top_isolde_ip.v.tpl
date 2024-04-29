@@ -1,15 +1,22 @@
+// Copyleft
+// top file for xilinix ip
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
+
+${disclaimer}
 module top_isolde_ip #(
+    // **** snitch cluster config
+    parameter integer NrDmaMasters = 2 + ${cfg['nr_hives']},
+    // ****
 		// Parameters of Axi Master Bus Interface M_AXI_WIDE
-		parameter  C_M_AXI_WIDE_TARGET_SLAVE_BASE_ADDR	= 32'h40000000,
-		parameter integer C_M_AXI_WIDE_BURST_LEN	= 16,
-		parameter integer C_M_AXI_WIDE_ID_WIDTH	= 3,
-		parameter integer C_M_AXI_WIDE_ADDR_WIDTH	= 48,
-		parameter integer C_M_AXI_WIDE_DATA_WIDTH	= 512,
-		parameter integer C_M_AXI_WIDE_AWUSER_WIDTH	= 1,
-		parameter integer C_M_AXI_WIDE_ARUSER_WIDTH	= 1,
-		parameter integer C_M_AXI_WIDE_WUSER_WIDTH	= 1,
-		parameter integer C_M_AXI_WIDE_RUSER_WIDTH	= 1,
-		parameter integer C_M_AXI_WIDE_BUSER_WIDTH	= 1
+		parameter integer C_M_AXI_WIDE_ID_WIDTH	   = $clog2(NrDmaMasters) + ${cfg['dma_id_width_in']},
+		parameter integer C_M_AXI_WIDE_ADDR_WIDTH	  = ${cfg['addr_width']},
+		parameter integer C_M_AXI_WIDE_DATA_WIDTH	  = ${cfg['dma_data_width']},
+		parameter integer C_M_AXI_WIDE_AWUSER_WIDTH	= ${cfg['dma_user_width']},
+		parameter integer C_M_AXI_WIDE_ARUSER_WIDTH	= ${cfg['dma_user_width']},
+		parameter integer C_M_AXI_WIDE_WUSER_WIDTH	= ${cfg['dma_user_width']},
+		parameter integer C_M_AXI_WIDE_RUSER_WIDTH	= ${cfg['dma_user_width']},
+		parameter integer C_M_AXI_WIDE_BUSER_WIDTH	= ${cfg['dma_user_width']}
 ) (
 //********* M_AXI_WIDE
  // Do not modify the ports beyond this line
@@ -62,7 +69,7 @@ module top_isolde_ip #(
 		output wire  m_axi_wide_rready
 //*********************
 );
- // Add user wire here
+ // Add user logic here
   snitch_cluster_wrapper ip_cluster(
 	.m_axi_wide_error(m_axi_wide_error),
 	.m_axi_wide_aclk(m_axi_wide_aclk),
@@ -112,6 +119,8 @@ module top_isolde_ip #(
   );
 
 
-  // User wire ends
+  // User logic ends
 
 endmodule
+
+
