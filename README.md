@@ -41,11 +41,22 @@ ln -s verible-v0.0-3640-gec69caeb/bin/ bin
 in console type:
 ```
 source ./eth.sh
-cd hw/system/snitch_cluster/
-make vivado_lint
+cd hw/system/snitch_isolde/
+make vivado-lint
 ```
 
-The folder hw/system/snitch_cluster/vivado will contain the vivado project
+The folder hw/system/snitch_isolde/vivado will contain the vivado project
+### Vivado IP
+
+in console type:
+```
+source ./eth.sh
+cd hw/system/snitch_isolde/
+make vivado-package-ip
+```
+
+The folder hw/system/snitch_isolde/vivado will contain the vivado project
+The folder hw/system/snitch_isolde/ip will contain the vivado IP  
 # Github 
 ## git configuration
 ```

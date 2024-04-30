@@ -332,12 +332,15 @@ vivado-lint: $(VIVADO_GEN_PREREQ)
 	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
-vivado-synth: $(GENERATED_DIR)/top_isolde_ip.v $(GENERATED_DIR)/sources.tcl
+vivado-synth: $(VIVADO_GEN_PREREQ)
 	rm -rf vivado && mkdir -p vivado
 	@echo "launch_runs synth_1 " >launch_runs.tcl
 	@echo "wait_on_runs synth_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
-#ipx::package_project -root_dir /mnt/m2/hdd2/ISOLDE-project/snitch/hw/system/ip_repo -vendor user.org -library user -taxonomy /UserIP -import_files	
+vivado-package-ip: $(VIVADO_GEN_PREREQ)
+	rm -rf vivado && mkdir -p vivado
+	vivado -mode batch -source ./create_project.tcl ./package-ip.tcl | tee vivado.log
+
 
 generate:  $(GENERATED_DIR)/snitch_cluster_wrapper.sv
