@@ -56,7 +56,7 @@ VLT_AR = ${VLT_BUILDDIR}/Vtestharness__ALL.a
 # to be rebuilt. This file is used to express this condition as a
 # prerequisite for other rules.
 CFG = cfg/lru.hjson
-
+DEFAULT_CFG=cfg/ZynqUltrascalePlus.hjson
 #####################
 # Simulator options #
 #####################
@@ -108,9 +108,8 @@ CLUSTER_GEN_PREREQ = ${CLUSTER_GEN} ${CLUSTER_GEN_SRC}
 $(CFG): FORCE
 	@# If the LRU config file doesn't exist, we use the default config.
 	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/cluster.hjson"; \
-		echo "Using default config file: $$DEFAULT_CFG"; \
-		cp $$DEFAULT_CFG $@; \
+		echo "Using default config file: $(DEFAULT_CFG)"; \
+		cp $(DEFAULT_CFG) $@; \
 	fi
 	@# If a config file is provided on the command-line and it differs
 	@# from the LRU config file then we override the LRU file with it
@@ -320,27 +319,31 @@ $(GENERATED_DIR)/sources.tcl: Bender.yml $(CFG) Makefile
 	bender script vivado | tee $(GENERATED_DIR)/sources.tcl
 
 
-.PHONY: vivado-lint generate
 
 VIVADO_GEN_PREREQ ?=  $(GENERATED_DIR)/top_isolde_ip.v $(GENERATED_DIR)/snitch_cluster_wrapper_axi.sv $(GENERATED_DIR)/sources.tcl
 
 
-vivado-lint: $(VIVADO_GEN_PREREQ)
+vivado-lint-ip: $(VIVADO_GEN_PREREQ)
 	rm -rf vivado && mkdir -p vivado
 	@echo "set_property elab_link_dcps false [current_fileset]" >launch_runs.tcl
 	@echo "set_property elab_load_timing_constraints false [current_fileset]" >>launch_runs.tcl
 	@echo "synth_design -rtl -rtl_skip_mlo -name rtl_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
-vivado-synth: $(VIVADO_GEN_PREREQ)
+vivado-synth-ip: $(VIVADO_GEN_PREREQ)
 	rm -rf vivado && mkdir -p vivado
 	@echo "launch_runs synth_1 " >launch_runs.tcl
 	@echo "wait_on_runs synth_1" >>launch_runs.tcl
 	vivado -mode batch -source ./create_project.tcl ./launch_runs.tcl | tee vivado.log
 
 vivado-package-ip: $(VIVADO_GEN_PREREQ)
+	rm -rf ip
 	rm -rf vivado && mkdir -p vivado
-	vivado -mode batch -source ./create_project.tcl ./package-ip.tcl | tee vivado.log
+	vivado -mode batch -source ./create_project.tcl ./package_ip.tcl | tee vivado.log
 
 
-generate:  $(GENERATED_DIR)/snitch_cluster_wrapper.sv
+vivado: $(VIVADO_GEN_PREREQ)
+	rm -rf vivado && mkdir -p vivado
+	vivado -mode batch -source ./create_project.tcl ./package_ip.tcl ./create_bd_design.tcl | tee vivado.log
+
+generate:  $(VIVADO_GEN_PREREQ)
