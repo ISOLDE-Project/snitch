@@ -320,7 +320,7 @@ $(GENERATED_DIR)/sources.tcl: Bender.yml $(CFG) Makefile
 
 
 
-VIVADO_GEN_PREREQ ?=  $(GENERATED_DIR)/top_isolde_ip.v $(GENERATED_DIR)/snitch_cluster_wrapper_axi.sv $(GENERATED_DIR)/sources.tcl
+VIVADO_GEN_PREREQ ?=  $(GENERATED_DIR)/top_isolde_ip.v $(GENERATED_DIR)/snitch_cluster_wrapper_axi.sv $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/sources.tcl
 
 
 vivado-lint-ip: $(VIVADO_GEN_PREREQ)
@@ -345,5 +345,9 @@ vivado-package-ip: $(VIVADO_GEN_PREREQ)
 vivado: $(VIVADO_GEN_PREREQ)
 	rm -rf vivado && mkdir -p vivado
 	vivado -mode batch -source ./create_project.tcl ./package_ip.tcl ./create_bd_design.tcl | tee vivado.log
-
+.PHONY: generate
 generate:  $(VIVADO_GEN_PREREQ)
+
+.PHONY: verilator
+verilator:
+	$(MAKE) -C `bender path renode_memory` prj_path=$(ROOT) verilator

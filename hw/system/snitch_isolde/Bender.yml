@@ -11,10 +11,16 @@ dependencies:
   snitch_cluster: {path: ../../ip/snitch_cluster}
   axi: {git: https://github.com/pulp-platform/axi.git, rev: ac5deb3ff086aa34b168f392c051e92603d6c0e2}
   test: {path: ../../ip/test}
+  renode_memory: {git: https://github.com/ISOLDE-Project/verilator-tb.git, rev: dev/axi}
+  
 sources:
-  # Level 0:
-  - generated/snitch_cluster_wrapper_axi.sv
-  - generated/top_isolde_ip.v
-  # Level 1:
+  - target: vivado
+    files:
+    - generated/snitch_cluster_wrapper_axi.sv
+    - generated/top_isolde_ip.v
+
   - target: any(simulation, verilator)
-    files: [test/testharness.sv]
+    files:
+    - generated/snitch_cluster_wrapper.sv
+
+    #files: [test/testharness.sv]
