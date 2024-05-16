@@ -7,9 +7,9 @@ __pycache__
 modelsim.ini
 *stacktrace*
 transcript
-
+files
 gmon.out
- 
+install/
 hw/system/snitch_cluster/launch_runs.tcl
 vivado*.*
 vivado/
