@@ -199,8 +199,16 @@ package ${cfg['pkg_name']};
   % endfor
   };
 
+  localparam snitch_ssr_pkg::ssr_cfg_t [${cfg['num_ssrs_max']}-1:0] SsrCfgs [${cfg['nr_cores']}] = '{
+${ssr_cfg(core, "'{{{indirection:d}, {isect_master:d}, {isect_master_idx:d}, {isect_slave:d}, "\
+  "{isect_slave_spill:d}, {indir_out_spill:d}, {num_loops}, {index_width}, {pointer_width}, "\
+  "{shift_width}, {rpt_width}, {index_credits}, {isect_slave_credits}, {data_credits}, "\
+  "{mux_resp_depth}}}", "/*None*/ '0", ',\n     ')}\
+  };
 
-
+  localparam logic [${cfg['num_ssrs_max']}-1:0][4:0] SsrRegs [${cfg['nr_cores']}] = '{
+${ssr_cfg(core, '{reg_idx}', '/*None*/ 0', ',')}\
+  };
 
 endpackage
 // verilog_lint: waive-stop package-filename
@@ -224,10 +232,10 @@ module ${cfg['name']}_wrapper (
 % if cfg['sram_cfg_expose']:
   input  ${cfg['pkg_name']}::sram_cfgs_t         sram_cfgs_i,
 %endif
-//  input  ${cfg['pkg_name']}::narrow_in_req_t     narrow_in_req_i,
-//  output ${cfg['pkg_name']}::narrow_in_resp_t    narrow_in_resp_o,
-//  output ${cfg['pkg_name']}::narrow_out_req_t    narrow_out_req_o,
-//  input  ${cfg['pkg_name']}::narrow_out_resp_t   narrow_out_resp_i,
+  input  ${cfg['pkg_name']}::narrow_in_req_t     narrow_in_req_i,
+  output ${cfg['pkg_name']}::narrow_in_resp_t    narrow_in_resp_o,
+  output ${cfg['pkg_name']}::narrow_out_req_t    narrow_out_req_o,
+  input  ${cfg['pkg_name']}::narrow_out_resp_t   narrow_out_resp_i,
   output ${cfg['pkg_name']}::wide_out_req_t      wide_out_req_o,
   input  ${cfg['pkg_name']}::wide_out_resp_t     wide_out_resp_i,
   input  ${cfg['pkg_name']}::wide_in_req_t       wide_in_req_i,
@@ -254,10 +262,10 @@ module ${cfg['name']}_wrapper (
     .NarrowUserWidth (${cfg['pkg_name']}::NarrowUserWidth),
     .WideUserWidth (${cfg['pkg_name']}::WideUserWidth),
     .BootAddr (${to_sv_hex(cfg['boot_addr'], 32)}),
-    .narrow_in_req_t  (0),  //.narrow_in_req_t (${cfg['pkg_name']}::narrow_in_req_t),
-    .narrow_in_resp_t (0),  //.narrow_in_resp_t (${cfg['pkg_name']}::narrow_in_resp_t),
-  //  .narrow_out_req_t (${cfg['pkg_name']}::narrow_out_req_t),
-  //  .narrow_out_resp_t (${cfg['pkg_name']}::narrow_out_resp_t),
+    .narrow_in_req_t (${cfg['pkg_name']}::narrow_in_req_t),
+    .narrow_in_resp_t (${cfg['pkg_name']}::narrow_in_resp_t),
+    .narrow_out_req_t (${cfg['pkg_name']}::narrow_out_req_t),
+    .narrow_out_resp_t (${cfg['pkg_name']}::narrow_out_resp_t),
     .wide_out_req_t (${cfg['pkg_name']}::wide_out_req_t),
     .wide_out_resp_t (${cfg['pkg_name']}::wide_out_resp_t),
     .wide_in_req_t (${cfg['pkg_name']}::wide_in_req_t),
@@ -273,8 +281,7 @@ module ${cfg['name']}_wrapper (
     .ICacheLineWidth (${cfg['pkg_name']}::ICacheLineWidth),
     .ICacheLineCount (${cfg['pkg_name']}::ICacheLineCount),
     .ICacheSets (${cfg['pkg_name']}::ICacheSets),
-    //.VMSupport (${int(cfg['vm_support'])}),
-    .VMSupport (0),
+    .VMSupport (${int(cfg['vm_support'])}),
     .RVE (${core_isa('e')}),
     .RVF (${core_isa('f')}),
     .RVD (${core_isa('d')}),
@@ -299,8 +306,8 @@ module ${cfg['name']}_wrapper (
     .NumSsrsMax (${cfg['num_ssrs_max']}),
     .NumSsrs (NumSsrs),
     .SsrMuxRespDepth (SsrMuxRespDepth),
-  //  .SsrRegs (${cfg['pkg_name']}::SsrRegs),
-  //  .SsrCfgs (${cfg['pkg_name']}::SsrCfgs),
+    .SsrRegs (${cfg['pkg_name']}::SsrRegs),
+    .SsrCfgs (${cfg['pkg_name']}::SsrCfgs),
     .NumSequencerInstr (NumSequencerInstr),
     .Hive (${cfg['pkg_name']}::Hive),
     .Topology (snitch_pkg::LogarithmicInterconnect),
@@ -353,10 +360,10 @@ module ${cfg['name']}_wrapper (
 % else:
     .sram_cfgs_i (${cfg['pkg_name']}::sram_cfgs_t'('0)),
 %endif
-//    .narrow_in_req_i,
-//    .narrow_in_resp_o,
-//    .narrow_out_req_o,
-//    .narrow_out_resp_i,
+    .narrow_in_req_i,
+    .narrow_in_resp_o,
+    .narrow_out_req_o,
+    .narrow_out_resp_i,
     .wide_out_req_o,
     .wide_out_resp_i,
     .wide_in_req_i,

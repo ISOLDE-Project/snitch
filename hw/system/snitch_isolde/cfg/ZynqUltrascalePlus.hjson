@@ -22,7 +22,7 @@
         },
         cluster_periph_size: 64, // kB
         zero_mem_size: 64, // kB
-        dma_data_width: 128,
+        dma_data_width: 64,
         dma_axi_req_fifo_depth: 3,
         dma_req_fifo_depth: 3,
         // Timing parameters
@@ -76,16 +76,16 @@
     },
     // Templates.
     compute_core_template: {
-        isa: "rv32i",
-        xssr: false,
-        xfrep: false,
+        isa: "rv32imafd",
+        xssr: true,
+        xfrep: true,
         xdma: false,
-        xf16: false,
-        xf16alt: false,
-        xf8: false,
-        xf8alt: false,
-        xfdotp: false,
-        xfvec: false,
+        xf16: true,
+        xf16alt: true,
+        xf8: true,
+        xf8alt: true,
+        xfdotp: true,
+        xfvec: true,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
@@ -97,7 +97,7 @@
         // Xdiv_sqrt: true,
     },
     dma_core_template: {
-        isa: "rv32i",
+        isa: "rv32imafd",
         // Xdiv_sqrt: true,
         # isa: "rv32ema",
         xdma: true

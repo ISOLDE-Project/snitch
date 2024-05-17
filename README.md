@@ -1,6 +1,11 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # ISOLDE Project
+
+### Prerequisite
+```
+sudo apt-get install -y device-tree-compiler
+```
 ## Python environment
 ```
 wget https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Linux-x86_64.sh

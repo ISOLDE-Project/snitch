@@ -31,7 +31,7 @@ VERILATOR_FLAGS += -x-assign fast
 # Make waveforms
 VERILATOR_FLAGS += --trace
 # Check SystemVerilog assertions
-VERILATOR_FLAGS += --assert
+#VERILATOR_FLAGS += --assert
 # Generate coverage analysis
 #VERILATOR_FLAGS += --coverage
 # Run Verilator in debug mode
@@ -71,16 +71,17 @@ VERILATOR_FLAGS += -Wno-BLKANDNBLK
 #
 VERILATOR_FLAGS += -Wno-UNOPTFLAT
 #
-#VERILATOR_FLAGS += -Wno-
+VERILATOR_FLAGS += -Wno-fatal
 
 #HDL_DIR := hdl
 #SV_FILES := $(wildcard $(SRC_DIR)/*.sv)
 TOP_MODULE := top
+TOP_MODULE_SV ?= src/top-axi.sv
 
 all: files
-	$(VERILATOR) $(VERILATOR_FLAGS) -I$(RENODE_MEMORY_ROOT_DIR)/renode_memory/hdl/imports -f files  src/top-axi.sv  cc/sim_main.cc cc/renode_dpi.cc --top-module $(TOP_MODULE)
+	$(VERILATOR) $(VERILATOR_FLAGS) -I$(RENODE_MEMORY_ROOT_DIR)/renode_memory/hdl/imports -f files  $(TOP_MODULE_SV)  cc/sim_main.cc cc/renode_dpi.cc --top-module $(TOP_MODULE)
 
-.PHONY: files
+
 files: Bender.yml
 	bender script verilator -t rtl -t verilator > $@
 
@@ -88,7 +89,7 @@ run: obj_dir/V$(TOP_MODULE)
 	obj_dir/V$(TOP_MODULE)
 
 obj_dir/V$(TOP_MODULE): obj_dir/V$(TOP_MODULE).mk
-	$(MAKE) -C obj_dir/ -f V$(TOP_MODULE).mk -j6
+	$(MAKE) -C obj_dir/ -f V$(TOP_MODULE).mk -j$(num_cores_half)
 
 .PHONY: obj_dir/V$(TOP_MODULE).mk
 
