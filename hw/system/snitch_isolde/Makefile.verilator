@@ -90,6 +90,7 @@ all: files
 
 
 files: Bender.yml
+	$(MAKE) generate
 	bender script verilator -t rtl -t verilator > $@
 
 run: obj_dir/V$(TOP_MODULE) $(ELF_FILE)
@@ -115,6 +116,7 @@ show-config:
 
 .PHONY: clean
 clean:
+	rm -fr generated
 	rm -f files
 	rm -fr obj_dir
 	rm -fr logs

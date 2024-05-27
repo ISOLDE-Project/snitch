@@ -6,14 +6,36 @@
 
 `include "renode_assign.svh"
 
+
+
 // verilog_lint: waive-start package-filename
-import renode_memory_pkg::*;
+package renode_aximem_pkg;
+
+//`include "axi/typedef.svh"
+
+  localparam int unsigned AddrWidth = 32;
+  localparam int unsigned DataWidth = 32;
+  localparam int unsigned IdWidth = 3;
+  localparam int unsigned UserWidth = 1;
+
+
+  typedef logic [AddrWidth-1:0]         addr_t;
+  typedef logic [DataWidth-1:0]         data_t;
+  typedef logic [DataWidth/8-1:0]   strb_t;
+  typedef logic [IdWidth-1:0]           id_t;
+  typedef logic [UserWidth-1:0]         user_t;
+
+
+   `AXI_TYPEDEF_ALL(axi_connection, addr_t, id_t, data_t, strb_t, user_t)
+
+
+endpackage
 
 module master (
     input  logic                             clk_i,
     input  logic                             rst_ni,
-    output  renode_memory_pkg::axi_connection_req_t  axi_req,
-    input   renode_memory_pkg::axi_connection_resp_t axi_resp
+    output  renode_aximem_pkg::axi_connection_req_t  axi_req,
+    input   renode_aximem_pkg::axi_connection_resp_t axi_resp
 );
 
 
@@ -56,23 +78,23 @@ module top (
   bus_connection                           bus_peripheral = new(connection);
 
 
-  renode_axi_if axi_if (.aclk(clk_i));
-  renode_memory_pkg::axi_connection_req_t  axi_req;
-  renode_memory_pkg::axi_connection_resp_t axi_resp;
+  renode_axi_if #(.AddressWidth(32),.DataWidth(64),.TransactionIdWidth(3)) i_axi_if(.aclk(clk_i));
+  renode_aximem_pkg::axi_connection_req_t  axi_req;
+  renode_aximem_pkg::axi_connection_resp_t axi_resp;
   //
  
 
-  `__RENODE_TO_RESP(axi_resp, axi_if)
-  `__REQ_TO_RENODE(axi_if, axi_req)
+  `__RENODE_TO_RESP(axi_resp, i_axi_if)
+  `__REQ_TO_RENODE(i_axi_if, axi_req)
 
   renode_memory mem (
-      .s_axi_if(axi_if),
+      .s_axi_if(i_axi_if),
       .bus_peripheral(bus_peripheral)
   );
 
   master ctr (
       .clk_i,
-      .rst_ni(axi_if.areset_n),
+      .rst_ni(i_axi_if.areset_n),
       .axi_req,
       .axi_resp
   );
@@ -83,13 +105,13 @@ module top (
       $dumpfile("logs/vlt_dump.vcd");
       $dumpvars();
     end
-    axi_if.areset_n = 0;
+    i_axi_if.areset_n = 0;
     $display("[%0t] Model running...\n", $time);
   end
 
    always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
-      axi_if.areset_n = 0;
+      i_axi_if.areset_n = 0;
       bus_peripheral.reset_assert();
     end
   end
