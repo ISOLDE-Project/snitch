@@ -21,35 +21,42 @@ module master (
     input renode_pkg::bus_connection bus_controller,
           mem_axi_if                 axi_conn
 );
+  logic rst_ni;
 
-  renode_axi_if #(
-      .AddressWidth(top_isolde_pkg::AddrWidth),
-      .DataWidth(top_isolde_pkg::DataWidth),
-      .TransactionIdWidth(top_isolde_pkg::IdWidthIn)
-  ) m_axi_if (
-      .aclk(axi_conn.clk_i)
-  );
-  assign m_axi_if.areset_n = axi_conn.rst_ni;
+  always @(bus_controller.reset_assert_request) begin
+    $display("axi_manager::reset_assert_request");
+    axi_conn.req.aw_valid = 0;
+    axi_conn.req.w_valid = 0;
+    axi_conn.req.b_ready = 0;
+    axi_conn.req.ar_valid = 0;
+    axi_conn.req.r_ready = 0;
+    rst_ni = 0;
+    //
+    // The reset takes 2 cycles to prevent a race condition without usage of a non-blocking assigment.
+    repeat (2) @(posedge axi_conn.clk_i);
+    bus_controller.reset_assert_respond();
+  end
 
-  `__RENODE_TO_REQ(axi_conn.req, m_axi_if)
-  `__RESP_TO_RENODE(m_axi_if, axi_conn.resp)
-
-  always_ff @(posedge axi_conn.clk_i) begin
-    if (!axi_conn.rst_ni) begin
-      $display("master::reset asserted");
-      // axi_req.aw_valid = 0;
-      // axi_req.w_valid  = 0;
-      // axi_req.b_ready  = 0;
-      // axi_req.ar_valid = 0;
-      // axi_req.r_ready  = 0;
-    end
+  always @(bus_controller.reset_deassert_request) begin
+    $display("axi_manager::reset_deassert_request");
+    //bus.areset_n = 1;
+    // There is one more wait for the clock edges to be sure that all modules aren't in a reset state.
+    repeat (2) @(posedge axi_conn.clk_i);
+    bus_controller.reset_deassert_respond();
+    rst_ni = 1;
   end
 
 
+  always_ff @(posedge axi_conn.clk_i) begin
+    if (!axi_conn.rst_ni) begin
+      rst_ni = 0;
+
+    end
+  end
 
   snitch_cluster_wrapper snitch (
       .clk_i(axi_conn.clk_i),
-      .rst_ni(axi_conn.rst_ni),
+      .rst_ni(rst_ni),
       // .debug_req_i(0),
       //   .meip_i(0),
       //   .mtip_i(0),
@@ -106,12 +113,14 @@ module top (
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       bus_peripheral.reset_assert();
+      bus_controller.reset_assert();
     end
   end
 
   always @(bus_peripheral.reset_assert_response) begin
     if (rst_ni) begin
       bus_peripheral.reset_deassert();
+      bus_controller.reset_deassert();
     end
   end
 
