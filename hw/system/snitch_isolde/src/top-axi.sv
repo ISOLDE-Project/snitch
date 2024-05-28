@@ -6,63 +6,56 @@
 
 `include "renode_assign.svh"
 
-
-
 // verilog_lint: waive-start package-filename
-package renode_aximem_pkg;
+package top_isolde_pkg;
+  import snitch_cluster_pkg::*;
 
-//`include "axi/typedef.svh"
-
-  localparam int unsigned AddrWidth = 32;
-  localparam int unsigned DataWidth = 32;
-  localparam int unsigned IdWidth = 3;
-  localparam int unsigned UserWidth = 1;
-
-
-  typedef logic [AddrWidth-1:0]         addr_t;
-  typedef logic [DataWidth-1:0]         data_t;
-  typedef logic [DataWidth/8-1:0]   strb_t;
-  typedef logic [IdWidth-1:0]           id_t;
-  typedef logic [UserWidth-1:0]         user_t;
-
-
-   `AXI_TYPEDEF_ALL(axi_connection, addr_t, id_t, data_t, strb_t, user_t)
-
+  localparam int unsigned AddrWidth = snitch_cluster_pkg::AddrWidth;
+  localparam int unsigned DataWidth = snitch_cluster_pkg::WideDataWidth;
+  localparam int unsigned IdWidthIn = snitch_cluster_pkg::WideIdWidthOut;
+  localparam int unsigned UserWidth = snitch_cluster_pkg::WideUserWidth;
 
 endpackage
 
 module master (
-    input  logic                             clk_i,
-    input  logic                             rst_ni,
-    output  renode_aximem_pkg::axi_connection_req_t  axi_req,
-    input   renode_aximem_pkg::axi_connection_resp_t axi_resp
+    input renode_pkg::bus_connection bus_controller,
+          mem_axi_if                 axi_conn
 );
 
+  renode_axi_if #(
+      .AddressWidth(top_isolde_pkg::AddrWidth),
+      .DataWidth(top_isolde_pkg::DataWidth),
+      .TransactionIdWidth(top_isolde_pkg::IdWidthIn)
+  ) m_axi_if (
+      .aclk(axi_conn.clk_i)
+  );
+  assign m_axi_if.areset_n = axi_conn.rst_ni;
 
+  `__RENODE_TO_REQ(axi_conn.req, m_axi_if)
+  `__RESP_TO_RENODE(m_axi_if, axi_conn.resp)
 
-
-    always_ff @(posedge clk_i) begin
-    if (!rst_ni) begin
+  always_ff @(posedge axi_conn.clk_i) begin
+    if (!axi_conn.rst_ni) begin
       $display("master::reset asserted");
-      axi_req.aw_valid = 0;
-      axi_req.w_valid  = 0;
-      axi_req.b_ready  = 0;
-      axi_req.ar_valid = 0;
-      axi_req.r_ready  = 0;
+      // axi_req.aw_valid = 0;
+      // axi_req.w_valid  = 0;
+      // axi_req.b_ready  = 0;
+      // axi_req.ar_valid = 0;
+      // axi_req.r_ready  = 0;
     end
   end
 
 
 
-  snitch_cluster_wrapper snitch(
-    .clk_i,
-    .rst_ni,
-  .debug_req_i(0),
-    .meip_i(0),
-    .mtip_i(0),
-    .msip_i(0),
-    .wide_out_req_o(axi_req),
-    .wide_out_resp_i(axi_resp)
+  snitch_cluster_wrapper snitch (
+      .clk_i(axi_conn.clk_i),
+      .rst_ni(axi_conn.rst_ni),
+      // .debug_req_i(0),
+      //   .meip_i(0),
+      //   .mtip_i(0),
+      //   .msip_i(0),
+      .wide_out_req_o(axi_conn.req),
+      .wide_out_resp_i(axi_conn.resp)
   );
 endmodule
 
@@ -74,44 +67,44 @@ module top (
 );
 
 
-  renode_connection                        connection = new();
-  bus_connection                           bus_peripheral = new(connection);
+  renode_connection connection = new();
+  bus_connection    bus_peripheral = new(connection);
+  bus_connection    bus_controller = new(connection);
 
+  mem_axi_if #(
+      .AddrWidth(top_isolde_pkg::AddrWidth),
+      .DataWidth(top_isolde_pkg::DataWidth),
+      .IdWidth  (top_isolde_pkg::IdWidthIn),
+      .UserWidth(top_isolde_pkg::UserWidth)
+  ) axi_conn (
+      clk_i,
+      rst_ni
+  );
 
-  renode_axi_if #(.AddressWidth(32),.DataWidth(64),.TransactionIdWidth(3)) i_axi_if(.aclk(clk_i));
-  renode_aximem_pkg::axi_connection_req_t  axi_req;
-  renode_aximem_pkg::axi_connection_resp_t axi_resp;
-  //
- 
-
-  `__RENODE_TO_RESP(axi_resp, i_axi_if)
-  `__REQ_TO_RENODE(i_axi_if, axi_req)
-
-  renode_memory mem (
-      .s_axi_if(i_axi_if),
-      .bus_peripheral(bus_peripheral)
+  renode_memory #(
+      .AddrWidth(top_isolde_pkg::AddrWidth),
+      .DataWidth(top_isolde_pkg::DataWidth),
+      .IdWidth  (top_isolde_pkg::IdWidthIn)
+  ) mem (
+      .bus_peripheral(bus_peripheral),
+      .axi_conn
   );
 
   master ctr (
-      .clk_i,
-      .rst_ni(i_axi_if.areset_n),
-      .axi_req,
-      .axi_resp
+      .bus_controller(bus_controller),
+      .axi_conn
   );
-  // Print some stuff as an example
   initial begin
     if ($test$plusargs("trace") != 0) begin
       $display("[%0t] Tracing to logs/vlt_dump.vcd...\n", $time);
       $dumpfile("logs/vlt_dump.vcd");
       $dumpvars();
     end
-    i_axi_if.areset_n = 0;
     $display("[%0t] Model running...\n", $time);
   end
 
-   always_ff @(posedge clk_i) begin
+  always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
-      i_axi_if.areset_n = 0;
       bus_peripheral.reset_assert();
     end
   end
