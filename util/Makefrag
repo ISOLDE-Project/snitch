@@ -31,6 +31,8 @@ VLT_FLAGS    += -Wno-WIDTHCONCAT
 VLT_FLAGS    += -Wno-UNSIGNED
 VLT_FLAGS    += -Wno-UNOPTFLAT
 VLT_FLAGS    += -Wno-fatal
+VLT_FLAGS    += --no-timing
+#VLT_FLAGS    += --threads 4
 VLT_FLAGS    += --unroll-count 1024
 VLT_BENDER   += -t rtl
 VLT_SOURCES  := $(shell ${BENDER} script flist ${VLT_BENDER} | ${SED_SRCS})
@@ -115,7 +117,7 @@ define VERILATE
 	mkdir -p $(dir $@)
 	$(BENDER) script verilator ${VLT_BENDER} > $(dir $@)files
 	$(VLT) \
-		--Mdir $(dir $@) -f $(dir $@)files $(VLT_FLAGS) \
+		--Mdir $(dir $@)  $(VERILATOR_ROOT)/include/verilated_threads.cpp -f $(dir $@)files $(VLT_FLAGS) \
 		-j $(shell nproc) --cc --build --top-module $(1)
 	touch $@
 endef
