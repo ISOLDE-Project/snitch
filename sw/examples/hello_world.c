@@ -8,8 +8,9 @@
 int main() {
     uint32_t core_idx = snrt_global_core_idx();
     uint32_t core_num = snrt_global_core_num();
-
-    printf("# Hello World!, core_idx=%d, core_num=%d\n", core_idx, core_num);
+    if (0 == core_idx)
+        printf("# Hello World!, core_idx=%d, core_num=%d\n", core_idx,
+               core_num);
 
     //     printf("# hart %d global core %d(%d) ", snrt_hartid(),
     //            snrt_global_core_idx(), snrt_global_core_num());
