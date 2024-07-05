@@ -34,6 +34,8 @@ VLOG_FLAGS 	  += -override_timescale 1ns/1ps
 VLOG_FLAGS 	  += -suppress 2583
 VLOG_FLAGS 	  += -suppress 13314
 VLOG_FLAGS 	  += ${QUESTA_64BIT}
+#
+CXXFLAGS      += -g
 
 #######
 # RTL #
@@ -71,6 +73,10 @@ VLT_COBJ += $(VLT_BUILDDIR)/generated/bootdata.o
 
 clean-vlt:
 	rm -rf ${VLT_BUILDDIR}
+
+clean-generated:
+	rm -rf generated
+
 
 # Build targets for verilator TB
 $(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a

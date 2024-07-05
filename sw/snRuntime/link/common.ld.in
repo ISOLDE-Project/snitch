@@ -7,11 +7,24 @@ ENTRY(_start)
 
 MEMORY
 {
+    ROM (rxa)  : ORIGIN = 0x1000, LENGTH = 100
     DRAM (rwxa)  : ORIGIN = @MEM_DRAM_ORIGIN@, LENGTH = @MEM_DRAM_SIZE@
 }
 
 SECTIONS
 {
+  
+    .bootloader 0x1000 : /* Place .bootloader at address 0x1000 */
+    {
+        *(.bootloader)
+    } >ROM
+
+   .bootdata : 
+    {
+        __bootdata_start = .;  /* Define a symbol at the start of .bootdata */
+        *(.bootdata)
+    } >ROM
+
   /* The program code and other data goes into DRAM */
   .text :
   {
@@ -24,7 +37,7 @@ SECTIONS
     . = ALIGN(4);
     _etext = .;
   } >DRAM
-
+     
   .rodata :
   {
     . = ALIGN(4);

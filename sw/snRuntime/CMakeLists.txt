@@ -65,6 +65,7 @@ set(sources
     src/alloc.c
     src/interrupt.c
     src/perf_cnt.c
+    src/isolde/bootdata.c
 )
 
 # platform specific sources
@@ -100,11 +101,11 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # Build all runtimes
 
     # Generic Runtime (requiring bootloader/OS)
-    add_snitch_library(snRuntime src/start.S ${sources} src/ssr_v2.c)
+    add_snitch_library(snRuntime src/start.S ${sources}  src/ssr_v2.c)
 
     # Bare Runtimes (with startup code)
     add_snitch_library(snRuntime-banshee src/platforms/shared/start.c ${banshee_snitch_sources} ${sources} src/ssr_v1.c)
-    add_snitch_library(snRuntime-cluster src/platforms/shared/start.c ${rtl_snitch_sources} ${sources} src/ssr_v2.c)
+    add_snitch_library(snRuntime-cluster src/platforms/shared/start.c ${rtl_snitch_sources} ${sources}   src/ssr_v2.c)
 
 
 else()

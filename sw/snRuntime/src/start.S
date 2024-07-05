@@ -1,4 +1,4 @@
-# Copyright 2020 ETH Zurich and University of Bologna.
+
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -6,12 +6,25 @@
 # is common among all bare runtimes.
 
 
+.global _start
+.global _start_core
+.global BOOTDATA 
+
+.section .bootloader, "ax"  # Define the section with executable attributes
+
+_start:
+    csrr  a0, mhartid
+    la    a1, BOOTDATA
+    la    t0,  _start_core
+    jr    t0
+
+
 # Expected from bootloader:
 # - a0: mhartid
 # - a1: device tree ptr
 .section .init
-_start:
-    .globl _start
+_start_core:
+    .globl _start_core
 
     # Initialize global pointer
 snrt.crt0.init_global_pointer:

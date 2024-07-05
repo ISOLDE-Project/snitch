@@ -1,3 +1,13 @@
+# Build SW
+In root folder make sure you have:
+```
+. ./eth.sh 
+cd sw/benchmark
+mkdir build && cd build
+cmake -DSNITCH_RUNTIME=snRuntime-cluster  ..
+make 
+```
+
 # Snitch Runtime Library
 
 This library implements a minimal runtime for Snitch systems, which is responsible for the following:
