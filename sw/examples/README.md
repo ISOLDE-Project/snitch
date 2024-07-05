@@ -1,5 +1,16 @@
 # Snitch Software Examples
 
+Build and run Hello World example
+
+```bash
+mkdir build & cd build
+cmake -DSNITCH_RUNTIME=snRuntime-cluster ..
+make
+../../../hw/system/snitch_cluster/bin/snitch_cluster.vlt  hello_world
+```
+
+
+ORIGINAL README content:
 Build the examples with
 
 ```bash
