@@ -4,6 +4,7 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+
 # Allow snRuntime to be built as a standalone library.
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # Read SnitchUtilities
@@ -22,6 +23,36 @@ else()
         ${CMAKE_CURRENT_SOURCE_DIR}/vendor/riscv-opcodes
         PARENT_SCOPE)
 endif()
+
+
+# Use the macro to get the Git root directory
+find_git_root_directory(ROOT_DIR)
+
+# Optionally, print the root directory for verification
+message(STATUS "Git root directory: ${ROOT_DIR}")
+
+# Define paths and scripts
+set(HW_SYS ${ROOT_DIR}/hw/system/snitch_cluster)
+set(CFG ${HW_SYS}/cfg/cluster.default.hjson)
+set(CLUSTER_GEN ${ROOT_DIR}/util/clustergen.py)
+file(GLOB CLUSTER_GEN_SRC ${ROOT_DIR}/util/clustergen/*.py)
+# set(GENERATED_FOLDER ${ROOT_DIR}/sw/snRuntime/src/generated)
+set(GENERATED_BOOTDATA ${ROOT_DIR}/sw/snRuntime/src/generated/bootdata.c)
+# Custom command to generate bootdata.c
+add_custom_command(
+    OUTPUT ${GENERATED_BOOTDATA}
+    COMMAND ${CMAKE_COMMAND} -E echo "Generating bootdata.c"
+ #   COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
+    COMMAND python ${CLUSTER_GEN} -c ${CFG} -o ${ROOT_DIR}/sw/snRuntime/src
+ #   DEPENDS ${CFG} ${CLUSTER_GEN} ${CLUSTER_GEN_SRC}
+    COMMENT "Running clustergen.py to create bootdata.c"
+    VERBATIM
+)
+
+# Add a custom target that depends on the custom command
+add_custom_target(generate_bootdata ALL
+    DEPENDS ${GENERATED_BOOTDATA}
+)
 
 # Default memory regions
 if(SNITCH_RUNTIME STREQUAL "snRuntime-cluster")
@@ -65,7 +96,7 @@ set(sources
     src/alloc.c
     src/interrupt.c
     src/perf_cnt.c
-    src/isolde/bootdata.c
+    src/generated/bootdata.c
 )
 
 # platform specific sources
@@ -117,7 +148,7 @@ else()
     elseif(SNITCH_RUNTIME STREQUAL "snRuntime-banshee")
         add_snitch_library(snRuntime-banshee src/platforms/shared/start.c ${banshee_snitch_sources} ${sources} src/ssr_v1.c)
     elseif(SNITCH_RUNTIME STREQUAL "snRuntime-cluster")
-        add_snitch_library(snRuntime-cluster src/platforms/shared/start.c ${rtl_snitch_sources} ${sources} src/ssr_v2.c)
+        add_snitch_library(snRuntime-cluster src/platforms/shared/start.c ${rtl_snitch_sources} ${sources} src/ssr_v2.c DEPENDS generate_bootdata)
     else()
         message(FATAL_ERROR "Requested runtime not implemented: ${SNITCH_RUNTIME}")
     endif()

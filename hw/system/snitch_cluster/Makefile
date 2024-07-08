@@ -75,6 +75,7 @@ clean-vlt:
 	rm -rf ${VLT_BUILDDIR}
 
 clean-generated:
+	echo ${MKFILE_DIR}generated/snitch_cluster_wrapper.sv
 	rm -rf generated
 
 

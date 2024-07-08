@@ -26,13 +26,61 @@ set(CMAKE_TOOLCHAIN_FILE toolchain-gcc CACHE STRING "Toolchain to use")
 # Select to build the tests
 set(BUILD_TESTS OFF CACHE BOOL "Build test executables")
 
+
+
+# Define the macro to find the Git root directory
+macro(find_git_root_directory OUTPUT_VARIABLE)
+    # Initialize the output variable
+    set(${OUTPUT_VARIABLE} "" PARENT_SCOPE)
+
+    # Try to get the Git root directory
+    execute_process(
+        COMMAND git rev-parse --show-toplevel
+        OUTPUT_VARIABLE _git_root_dir
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE _git_result
+    )
+
+    # Check if the Git command was successful
+    if(NOT _git_result EQUAL 0)
+        message(FATAL_ERROR "Failed to determine Git root directory. Ensure this is a Git repository.")
+    endif()
+
+    # Set the output variable with the result
+    # set(${OUTPUT_VARIABLE} "${_git_root_dir}" PARENT_SCOPE)
+    set(${OUTPUT_VARIABLE} "${_git_root_dir}" CACHE INTERNAL "Git root directory")
+endmacro()
+
+
+
+include(CMakeParseArguments)
+
 macro(add_snitch_library name)
-    add_library(${ARGV})
+    # Parse arguments
+    cmake_parse_arguments(ARG
+        ""            # No boolean options
+        ""            # No single-value arguments
+        "DEPENDS"     # Multi-value argument
+        ${ARGN}       # The arguments passed to the macro
+    )
+
+    # Add the library with the provided sources
+    add_library(${name} ${ARG_UNPARSED_ARGUMENTS})
+
+    # Add dependencies if specified
+    if (ARG_DEPENDS)
+        add_dependencies(${name} ${ARG_DEPENDS})
+    endif()
+
+    # Add a custom post-build command to generate the .s file
     add_custom_command(
         TARGET ${name}
         POST_BUILD
-        COMMAND ${CMAKE_OBJDUMP} -dhS $<TARGET_FILE:${name}> > $<TARGET_FILE:${name}>.s)
+        COMMAND ${CMAKE_OBJDUMP} -dhS $<TARGET_FILE:${name}> > $<TARGET_FILE:${name}>.s
+    )
 endmacro()
+
 
 macro(add_snitch_executable name)
     add_executable(${ARGV})
