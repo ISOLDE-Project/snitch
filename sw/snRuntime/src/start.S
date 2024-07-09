@@ -1,10 +1,30 @@
-# Copyright 2020 ETH Zurich and University of Bologna.
+
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-.section .init
+# This file defines the `_start` symbol and initializes the global pointer. This
+# is common among all bare runtimes.
+
+
+.global _start
+.global _start_core
+.global BOOTDATA 
+
+.section .bootloader, "ax"  # Define the section with executable attributes
+
 _start:
-    .globl _start
+    csrr  a0, mhartid
+    la    a1, BOOTDATA
+    la    t0,  _start_core
+    jr    t0
+
+
+# Expected from bootloader:
+# - a0: mhartid
+# - a1: device tree ptr
+.section .init
+_start_core:
+    .globl _start_core
 
 #ifdef SNRT_INIT_INT_REGS
 snrt.crt0.init_int_registers:

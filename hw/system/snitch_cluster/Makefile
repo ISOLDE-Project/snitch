@@ -193,6 +193,27 @@ $(VLT_AR): ${VLT_SOURCES} ${TB_SRCS}
 	$(call VERILATE,testharness)
 verilate: $(VLT_AR)
 
+# Required C sources for the verilator TB that are linked against the verilated model
+VLT_COBJ += $(VLT_BUILDDIR)/tb/common_lib.o
+VLT_COBJ += $(VLT_BUILDDIR)/tb/verilator_lib.o
+VLT_COBJ += $(VLT_BUILDDIR)/tb/tb_bin.o
+# Sources from verilator root
+VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
+VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
+VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
+VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_threads.o
+
+# Bootdata
+VLT_COBJ += $(VLT_BUILDDIR)/generated/bootdata.o
+
+clean-vlt:
+	rm -rf ${VLT_BUILDDIR}
+
+clean-generated:
+	echo ${MKFILE_DIR}generated/snitch_cluster_wrapper.sv
+	rm -rf generated
+
+
 # Build targets for verilator TB
 $(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)

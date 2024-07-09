@@ -67,6 +67,9 @@ def main():
     parser.add_argument("--template",
                         metavar="template",
                         help="Name of the template file")
+    parser.add_argument("--bootdata_C",
+                        action="store_true",
+                        help="Generate C file")
 
     args = parser.parse_args()
 
@@ -114,6 +117,10 @@ def main():
     if args.memories:
         with open(outdir / "memories.json", "w") as f:
             f.write(cluster_tb.cluster.memory_cfg())
+    
+    if args.bootdata_C:
+        with open(outdir / "bootdata.c", "w") as f:
+            f.write(cluster_tb.render_boot_C_data())
 
     ####################
     # Generic template #
