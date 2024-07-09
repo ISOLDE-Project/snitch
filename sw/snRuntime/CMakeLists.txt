@@ -32,18 +32,18 @@ find_git_root_directory(ROOT_DIR)
 message(STATUS "Git root directory: ${ROOT_DIR}")
 
 # Define paths and scripts
-set(HW_SYS ${ROOT_DIR}/hw/system/snitch_cluster)
+set(HW_SYS ${ROOT_DIR}/hw/system/snitch_isolde)
 set(CFG ${HW_SYS}/cfg/cluster.default.hjson)
 set(CLUSTER_GEN ${ROOT_DIR}/util/clustergen.py)
 file(GLOB CLUSTER_GEN_SRC ${ROOT_DIR}/util/clustergen/*.py)
-# set(GENERATED_FOLDER ${ROOT_DIR}/sw/snRuntime/src/generated)
+set(GENERATED_FOLDER ${ROOT_DIR}/sw/snRuntime/src/generated)
 set(GENERATED_BOOTDATA ${ROOT_DIR}/sw/snRuntime/src/generated/bootdata.c)
 # Custom command to generate bootdata.c
 add_custom_command(
     OUTPUT ${GENERATED_BOOTDATA}
-    COMMAND ${CMAKE_COMMAND} -E echo "Generating bootdata.c"
- #   COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
-    COMMAND python ${CLUSTER_GEN} -c ${CFG} -o ${ROOT_DIR}/sw/snRuntime/src
+    COMMAND ${CMAKE_COMMAND} -E echo "Generating bootdata.c:" python ${CLUSTER_GEN}  -c ${CFG} -o ${ROOT_DIR}/sw/snRuntime/src --bootdata
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
+    COMMAND python ${CLUSTER_GEN}  -c ${CFG} -o ${GENERATED_FOLDER} --bootdata_C
  #   DEPENDS ${CFG} ${CLUSTER_GEN} ${CLUSTER_GEN_SRC}
     COMMENT "Running clustergen.py to create bootdata.c"
     VERBATIM

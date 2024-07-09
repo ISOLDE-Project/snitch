@@ -30,9 +30,6 @@ set(BUILD_TESTS OFF CACHE BOOL "Build test executables")
 
 # Define the macro to find the Git root directory
 macro(find_git_root_directory OUTPUT_VARIABLE)
-    # Initialize the output variable
-    set(${OUTPUT_VARIABLE} "" PARENT_SCOPE)
-
     # Try to get the Git root directory
     execute_process(
         COMMAND git rev-parse --show-toplevel
