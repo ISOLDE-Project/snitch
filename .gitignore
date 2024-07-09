@@ -9,3 +9,9 @@ modelsim.ini
 transcript
 
 gmon.out
+logs
+*.old/
+*.jou
+*.log
+install/
+build/
