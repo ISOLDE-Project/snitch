@@ -31,9 +31,17 @@ find_git_root_directory(ROOT_DIR)
 # Optionally, print the root directory for verification
 message(STATUS "Git root directory: ${ROOT_DIR}")
 
+
+# Check if HW_SYS is defined
+if(NOT DEFINED HW_SYS)
+    message(FATAL_ERROR "HW_SYS is not defined. Please define the HW_SYS variable and try again, e.g. hw/system/snitch_cluster")
+else()
+    message(STATUS "HW_SYS is defined as: ${HW_SYS}")
+endif()
+
+
 # Define paths and scripts
-set(HW_SYS ${ROOT_DIR}/hw/system/snitch_isolde)
-set(CFG ${HW_SYS}/cfg/cluster.default.hjson)
+set(CFG ${ROOT_DIR}/${HW_SYS}/cfg/lru.hjson)
 set(CLUSTER_GEN ${ROOT_DIR}/util/clustergen.py)
 file(GLOB CLUSTER_GEN_SRC ${ROOT_DIR}/util/clustergen/*.py)
 set(GENERATED_FOLDER ${ROOT_DIR}/sw/snRuntime/src/generated)

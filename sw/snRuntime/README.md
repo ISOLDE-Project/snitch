@@ -4,7 +4,7 @@ In root folder make sure you have:
 . ./eth.sh 
 cd sw/benchmark
 mkdir build && cd build
-cmake -DSNITCH_RUNTIME=snRuntime-cluster  ..
+cmake -DSNITCH_RUNTIME=snRuntime-cluster  -DHW_SYS=hw/system/snitch_cluster ..
 make 
 ```
 
