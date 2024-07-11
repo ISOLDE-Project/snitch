@@ -13,7 +13,8 @@
 # - a1: device tree ptr ("bootdata" in `tb_lib.hh`)
 _snrt_init_core_info:
     .globl _snrt_init_core_info
-    mv        a4, a1
+    #mv        a4, a1
+    la        a4, BOOTDATA
     lw        a1, 4(a4)  # load the number of cores per cluster
     lw        t0, 8(a4)  # load cluster's hartid offset
     lw        a2, 12(a4) # start address of the TCDM
@@ -45,5 +46,6 @@ _snrt_cluster_barrier:
 # a0 = bootdata->hartid_base
 _snrt_get_base_hartid:
     .globl _snrt_get_base_hartid
+    la        a0, BOOTDATA
     lw        a0, 8(a0)  # load cluster's hartid offset
     ret

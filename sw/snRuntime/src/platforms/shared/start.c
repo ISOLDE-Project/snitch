@@ -11,23 +11,9 @@ extern const uint32_t _snrt_cluster_cluster_num;
 extern const uint32_t _snrt_cluster_cluster_id;
 void *const _snrt_cluster_global_offset = (void *)0x10000000;
 
-const uint32_t snrt_stack_size __attribute__((weak, section(".rodata"))) = 10;
+const uint32_t snrt_stack_size __attribute__((weak, section(".rodata"))) = 100;
 
-// The boot data generated along with the system RTL.
-// See `ip/test/src/tb_lib.hh` for details.
-struct snrt_cluster_bootdata {
-    uint32_t boot_addr;
-    uint32_t core_count;
-    uint32_t hartid_base;
-    uint32_t tcdm_start;
-    uint32_t tcdm_size;
-    uint32_t tcdm_offset;
-    uint64_t global_mem_start;
-    uint64_t global_mem_end;
-    uint32_t cluster_count;
-    uint32_t s1_quadrant_count;
-    uint32_t clint_base;
-};
+
 
 // Rudimentary string buffer for putc calls.
 extern uint32_t _edram;
@@ -41,13 +27,14 @@ static volatile struct putc_buffer {
     char data[PUTC_BUFFER_LEN];
 } *const putc_buffer = (void *)&_edram;
 
-void _snrt_init_team(uint32_t cluster_core_id, uint32_t cluster_core_num,
+
+void _snrt_init_team( uint32_t cluster_core_num,
                      void *spm_start, void *spm_end,
-                     const struct snrt_cluster_bootdata *bootdata,
+                     const struct BootData *bootdata,
                      struct snrt_team_root *team) {
-    (void)cluster_core_id;
+    
     team->base.root = team;
-    team->bootdata = (void *)bootdata;
+    team->bootdata = bootdata;
     team->global_core_base_hartid = bootdata->hartid_base;
     team->global_core_num = bootdata->core_count * bootdata->cluster_count *
                             bootdata->s1_quadrant_count;

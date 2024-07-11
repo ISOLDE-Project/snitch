@@ -108,8 +108,8 @@ int fesvr_tick() {
 
 // DPI calls.
 void tb_memory_read(long long addr, int len, const svOpenArrayHandle data) {
-    // std::cout << "[TB] Read " << std::hex << addr << std::dec << " (" << len
-    //           << " bytes)\n";
+    std::cout << "[TB] Read " << std::hex << addr << std::dec << " (" << len
+              << " bytes)\n";
     void *data_ptr = svGetArrayPtr(data);
     assert(data_ptr);
     sim::MEM.read(addr, len, (uint8_t *)data_ptr);
@@ -117,8 +117,8 @@ void tb_memory_read(long long addr, int len, const svOpenArrayHandle data) {
 
 void tb_memory_write(long long addr, int len, const svOpenArrayHandle data,
                      const svOpenArrayHandle strb) {
-    // std::cout << "[TB] Write " << std::hex << addr << std::dec << " (" << len
-    //           << " bytes)\n";
+    std::cout << "[TB] Write " << std::hex << addr << std::dec << " (" << len
+              << " bytes)\n";
     const void *data_ptr = svGetArrayPtr(data);
     const void *strb_ptr = svGetArrayPtr(strb);
     assert(data_ptr);

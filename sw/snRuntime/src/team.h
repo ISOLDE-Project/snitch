@@ -8,6 +8,11 @@ extern __thread struct snrt_team *_snrt_team_current;
 extern __thread uint32_t _snrt_core_idx;
 extern const uint32_t _snrt_team_size;
 
+// The boot data generated along with the system RTL.
+#define BootData_HEADER_ONLY
+#include "generated/bootdata.c"
+#undef BootData_HEADER_ONLY
+
 struct snrt_team {
     /// Pointer to the root team description of this cluster.
     struct snrt_team_root *root;
@@ -29,7 +34,7 @@ struct snrt_allocator {
 // This struct is placed at the end of each clusters TCDM
 struct snrt_team_root {
     struct snrt_team base;
-    const void *bootdata;
+    const struct BootData* bootdata;
     uint32_t global_core_base_hartid;
     uint32_t global_core_num;
     uint32_t cluster_idx;

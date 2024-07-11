@@ -107,7 +107,11 @@ snrt.crt0.init_registers:
 
     # Read hartid and number of cores in the cluster.
 snrt.crt0.init_stack:
-
+    li a3, 0x100200      # Load the base address into a3
+    li t0, 0x400         # Load the offset value into t0
+    csrr a0, mhartid     # Read the Hart ID into a0
+    mul t0, a0, t0       # Multiply the Hart ID by the offset
+    sub a3, a3, t0       # Subtract the offset from the base address
     # Set 8 bytes aside for the main return value and clear that to zero.
     addi      a3, a3, -8
     sw        zero, 0(a3)
@@ -174,6 +178,12 @@ snrt.crt0.init_team:
     sw        a2, 8(sp)
     sw        a3, 12(sp)
     sw        a4, 16(sp)
+    csrr  a0, mhartid
+    li    a1, 0x1000000
+    li    a2, 0x1002000
+    la    a3, BOOTDATA
+    #li    a4, 0x1004000
+    mv a4,a5
     call      _snrt_init_team
     lw        a0, 0(sp)
     lw        a1, 4(sp)
