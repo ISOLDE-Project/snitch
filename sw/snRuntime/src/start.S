@@ -38,7 +38,7 @@ snrt.crt0.init_core_info:
     # Information passed into the call:
     # - a0: mhartid (from bootloader)
     # - a1: device tree ptr (from bootloader)
-    call      _snrt_init_core_info
+    # call      _snrt_init_core_info
     # Information needed after the call:
     # - a0: cluster-local core id
     # - a1: cluster-local core count
@@ -107,8 +107,8 @@ snrt.crt0.init_registers:
 
     # Read hartid and number of cores in the cluster.
 snrt.crt0.init_stack:
-    li a3, 0x100200      # Load the base address into a3
-    li t0, 0x400         # Load the offset value into t0
+    li a3, 0x1020000      # Load the base address into a3
+    li t0, 0x80         # Load the offset value into t0
     csrr a0, mhartid     # Read the Hart ID into a0
     mul t0, a0, t0       # Multiply the Hart ID by the offset
     sub a3, a3, t0       # Subtract the offset from the base address
@@ -119,21 +119,9 @@ snrt.crt0.init_stack:
     # Set space aside for the root team structure.
     lw        t0, _snrt_team_size
     sub       a3, a3, t0
-    mv        a5, a3
+    andi      a4, a3, ~0x7 # align  _snrt_team storage to 8B
 
-    # Compute the stack top for this hart, and the cluster-wide stack bottom.
-    lw        t2, snrt_stack_size  # load stack size (overridable by binary)
 
-    sll       t0, a0, t2  # this hart
-    sll       t1, a1, t2  # all harts
-    sub       sp, a3, t0
-    sub       a3, a3, t1
-
-    # Misalign stacks in the TCDM to reduce banking conflicts
-    slli      t0, a0, 3  # this hart
-    slli      t1, a1, 3  # all harts
-    sub       sp, sp, t0
-    sub       a3, a3, t1
 
     # Allocate thread-local storage at the top of the stack and set tp
     # to the base of the tls
@@ -142,7 +130,7 @@ snrt.crt0.init_tls:
     la        t1, __tdata_end
     la        t2, __tbss_start
     la        t3, __tbss_end
-    add       sp, sp, t0   # subtract sp to make room for TLS and align
+    add       sp, a3, t0   # subtract sp to make room for TLS and align
     sub       sp, sp, t1
     add       sp, sp, t2
     sub       sp, sp, t3
@@ -150,24 +138,18 @@ snrt.crt0.init_tls:
     mv        tp, sp       # palce tp at start of TLS
     andi      sp, sp, ~0x7 # align stack to 8B
 
-    # Copy __tdata_start to __tdata_end.
-    mv        t4, tp
-    bge       t0, t1, 2f
-1:  lw        t5, 0(t0)
-    sw        t5, 0(t4)
-    addi      t0, t0, 4
-    addi      t4, t4, 4
-    blt       t0, t1, 1b
-2:
+
 
     # Clear from _tdata_end to _tbss_end.
+    csrr      t0, mhartid
+    bnez      t0, 2f
     la        t0, __tbss_start
     la        t1, __tbss_end
     bge       t0, t1, 2f
-1:  sw        zero, 0(t4)
+1:  sw        zero, 0(t0)
     addi      t0, t0, 4
-    addi      t4, t4, 4
-    blt       t0, t2, 1b
+    # addi      t4, t4, 4
+    blt       t0, t1, 1b
 2:
 
     # Initialize the root team.
@@ -180,29 +162,28 @@ snrt.crt0.init_team:
     sw        a4, 16(sp)
     csrr  a0, mhartid
     li    a1, 0x1000000
-    li    a2, 0x1002000
+    li    a2, 0x1020000
     la    a3, BOOTDATA
-    #li    a4, 0x1004000
-    mv a4,a5
-    call      _snrt_init_team
-    lw        a0, 0(sp)
-    lw        a1, 4(sp)
-    lw        a2, 8(sp)
-    lw        a3, 12(sp)
-    lw        a4, 16(sp)
-    addi      sp, sp, 20
+ #   call      _snrt_init_team
+ #   lw        a0, 0(sp)
+ #   lw        a1, 4(sp)
+ #   lw        a2, 8(sp)
+ #   lw        a3, 12(sp)
+ #   lw        a4, 16(sp)
+ #   addi      sp, sp, 20
 
     # Prepare interrupts
 snrt.crt0.init_interrupt:
-    la t0, __snrt_crt0_interrupt_handler
-    csrw   mtvec, t0
+ #   la t0, __snrt_crt0_interrupt_handler
+ #   csrw   mtvec, t0
 
     # Synchronize cores.
 snrt.crt0.pre_barrier:
-    call      _snrt_cluster_barrier
+ #   call      _snrt_cluster_barrier
 
     # Execute the main function.
 snrt.crt0.main:
+    bnez      a0, snrt.crt0.post_barrier
     call      main  # main(int core_id, int core_num, void *spm_start, void *spm_end)
     mv        s0, a0 # store return value in s0
     # lw        s0, tcdm_end_address_reg  # add return value to special slot
@@ -211,14 +192,15 @@ snrt.crt0.main:
 
     # Synchronize cores.
 snrt.crt0.post_barrier:
-    call      _snrt_cluster_barrier
+#    call      _snrt_cluster_barrier
 
     # Write execution result to EOC register.
 snrt.crt0.end:
     mv        a0, s0 # recover return value of main function in s0
     call      _snrt_exit
 1:
-    wfi
+    # wfi
+    addi x0, x0, 0
     j       1b
 
 __snrt_crt0_interrupt_handler:

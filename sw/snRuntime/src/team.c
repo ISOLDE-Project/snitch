@@ -9,6 +9,7 @@
 __thread struct snrt_team *_snrt_team_current;
 __thread uint32_t _snrt_core_idx;
 
+extern const struct BootData BOOTDATA;
 const uint32_t _snrt_team_size __attribute__((section(".rodata"))) =
     sizeof(struct snrt_team_root);
 
@@ -21,7 +22,7 @@ struct snrt_peripherals *snrt_peripherals() {
 }
 
 uint32_t snrt_global_core_base_hartid() {
-    return _snrt_team_current->root->global_core_base_hartid;
+    return BOOTDATA.hartid_base;
 }
 
 uint32_t snrt_cluster_core_base_hartid() {
@@ -29,7 +30,7 @@ uint32_t snrt_cluster_core_base_hartid() {
 }
 
 uint32_t snrt_global_core_idx() {
-    return snrt_hartid() - _snrt_team_current->root->global_core_base_hartid;
+    return snrt_hartid() - BOOTDATA.hartid_base;
 }
 
 uint32_t snrt_global_core_num() {
