@@ -20,7 +20,7 @@ VSIM_BUILDDIR := work-vsim
 FESVR          ?= ${MKFILE_DIR}work
 FESVR_VERSION  ?= 35d50bc40e59ea1d5566fbd3d9226023821b1bb6
 
-VLT_BUILDDIR := work-vlt
+VLT_BUILDDIR := $(MKFILE_DIR)/work-vlt
 VLT_FESVR     = $(VLT_BUILDDIR)/riscv-isa-sim
 VLT_FLAGS    += -Wno-BLKANDNBLK
 VLT_FLAGS    += -Wno-LITENDIAN
@@ -33,7 +33,6 @@ VLT_FLAGS    += -Wno-UNOPTFLAT
 VLT_FLAGS    += -Wno-fatal
 VLT_FLAGS    += --no-timing
 VLT_FLAGS    += --unroll-count 1024
-VLT_FLAGS    += -CFLAGS -g
 VLT_BENDER   += -t rtl
 VLT_SOURCES  := $(shell ${BENDER} script flist ${VLT_BENDER} | ${SED_SRCS})
 VLT_CFLAGS   += -std=c++14 -pthread

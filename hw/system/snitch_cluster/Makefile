@@ -25,7 +25,7 @@ clean: clean-sw clean-vsim clean-vlt clean-vcs clean-logs clean-bender
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := ${MKFILE_DIR}../../..
-
+TARGET       = snitch_cluster
 include $(ROOT)/util/Makefrag
 
 ############
@@ -45,6 +45,7 @@ VLOG      	?= vlog ${QUESTA_64BIT}
 #########################
 
 PLATFORM_HEADERS_DIR ?= sw/runtime/shared
+BIN_DIR              ?= bin
 GENERATED_DIR        ?= $(MKFILE_DIR)generated
 
 # Verilated and compiled snitch cluster
@@ -78,27 +79,18 @@ VLOG_FLAGS += ${QUESTA_64BIT}
 ###############
 
 TB_CC_SOURCES += \
-	${TB_DIR}/rtl_lib.cc \
 	${TB_DIR}/common_lib.cc \
 	$(GENERATED_DIR)/bootdata.cc
+
+VLT_CC_SOURCES += \
+	${TB_DIR}/verilator_lib.cc \
+	${TB_DIR}/tb_bin.cc
 
 TB_CC_FLAGS += \
 	-std=c++14 \
 	-I${MKFILE_DIR}/test \
 	-I${FESVR}/include \
 	-I${TB_DIR}
-
-# Required C sources for the verilator TB that are linked against the verilated model
-VLT_COBJ += $(VLT_BUILDDIR)/tb/common_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/verilator_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/tb_bin.o
-# Sources from verilator root
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_threads.o
-# Bootdata
-VLT_COBJ += $(VLT_BUILDDIR)/generated/bootdata.o
 
 #################
 # Prerequisites #
@@ -188,31 +180,22 @@ $(GENERATED_DIR)/bootdata.cc: ${CFG} ${CLUSTER_GEN_PREREQ} | $(GENERATED_DIR)
 
 # Clean all build directories and temporary files for Questasim simulation
 clean-vlt: clean-work
-	rm -rf $(VLT_BUILDDIR)
+	rm -fv $(VLT_BUILDDIR)/*Vtestharness*.*
+	rm -fv $(VLT_BUILDDIR)/files
+	rm -fv $(VLT_BUILDDIR)/verilated*
+	rm -fv $(BIN_DIR)/$(TARGET).vlt
 
 clean-generated:
 	rm -rf generated
 
-$(VLT_AR): ${VLT_SOURCES} ${TB_SRCS}
-	$(call VERILATE,testharness)
-verilate: $(VLT_AR)
-
-# Build targets for verilator TB
-$(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a
+$(BIN_DIR)/$(TARGET).vlt: ${VLT_SOURCES} ${TB_CC_SOURCES} ${VLT_CC_SOURCES} ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/vlt/%.o: $(VLT_ROOT)/include/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/generated/%.o: $(GENERATED_DIR)/%.cc ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-
-# Build compilation script and compile all sources for Verilator simulation
-# Link verilated archive with $(VLT_COBJ)
-bin/snitch_cluster.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread
+	$(VLT) $(shell $(BENDER) script verilator $(VLT_BENDER)) \
+		$(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
+		-CFLAGS "$(VLT_CFLAGS)" \
+		-LDFLAGS "-Llib -lfesvr -lpthread" \
+		-o ../$@ --cc --exe --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
+	$(MAKE) -C $(VLT_BUILDDIR) -j $(shell nproc) -f Vtestharness.mk
 
 ############
 # Modelsim #
