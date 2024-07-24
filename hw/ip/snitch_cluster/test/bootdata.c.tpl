@@ -18,7 +18,7 @@ struct BootData {
     uint32_t clint_base;
 };
 
-
+#ifndef  BootData_HEADER_ONLY
 __attribute__((section(".bootdata"))) 
 const struct BootData BOOTDATA = {.boot_addr = ${hex(cfg['cluster']['boot_addr'])},
                            .core_count = ${cfg['cluster']['nr_cores']},
@@ -31,5 +31,5 @@ const struct BootData BOOTDATA = {.boot_addr = ${hex(cfg['cluster']['boot_addr']
                            .cluster_count = ${cfg['s1_quadrant']['nr_clusters']},
                            .s1_quadrant_count = ${cfg['nr_s1_quadrant']},
                            .clint_base = ${hex(cfg['peripherals']['clint']['address'])}};
-
+#endif
 
