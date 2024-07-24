@@ -188,14 +188,36 @@ clean-vlt: clean-work
 clean-generated:
 	rm -rf generated
 
-$(BIN_DIR)/$(TARGET).vlt: ${VLT_SOURCES} ${TB_CC_SOURCES} ${VLT_CC_SOURCES} ${VLT_BUILDDIR}/lib/libfesvr.a
+$(VLT_BUILDDIR)/files: Bender.yml
+	$(BENDER) script verilator $(VLT_BENDER) >$@
+	touch $@
+
+$(BIN_DIR)/$(TARGET).vlt: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
-	$(VLT) $(shell $(BENDER) script verilator $(VLT_BENDER)) \
-		$(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
+	$(VLT) $(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
+		-f $(VLT_BUILDDIR)/files \
 		-CFLAGS "$(VLT_CFLAGS)" \
 		-LDFLAGS "-Llib -lfesvr -lpthread" \
 		-o ../$@ --cc --exe --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
 	$(MAKE) -C $(VLT_BUILDDIR) -j $(shell nproc) -f Vtestharness.mk
+
+##reports
+$(BIN_DIR)/report.json: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} 
+	mkdir -p $(dir $@)
+	$(VLT) $(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
+		-f $(VLT_BUILDDIR)/files \
+		-CFLAGS "$(VLT_CFLAGS)" \
+		-LDFLAGS "-Llib -lfesvr -lpthread" \
+		 --json-only-output $@ --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
+
+$(BIN_DIR)/report.xml: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} 
+	mkdir -p $(dir $@)
+	$(VLT) $(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
+		-f $(VLT_BUILDDIR)/files \
+		-CFLAGS "$(VLT_CFLAGS)" \
+		-LDFLAGS "-Llib -lfesvr -lpthread" \
+		--xml-output $@ --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
+	
 
 ############
 # Modelsim #
