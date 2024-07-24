@@ -81,16 +81,16 @@ void Sim::main() {
 double sc_time_stamp() { return sim::TIME * 1e-9; }
 
 // DPI calls.
-void tb_memory_read(long long addr, int len, const svOpenArrayHandle data) {
-   std::cout << "[TB] Read"<<len*8 << " "<<std::hex << addr << std::dec <<"\n";
+void tb_memory_read(const char* inst_name,long long addr, int len, const svOpenArrayHandle data) {
+   std::cout << "[ "<<inst_name<<" ] Read"<<len*8 << " "<<std::hex << addr << std::dec <<"\n";
     void *data_ptr = svGetArrayPtr(data);
     assert(data_ptr);
     sim::MEM.read(addr, len, (uint8_t *)data_ptr);
 }
 
-void tb_memory_write(long long addr, int len, const svOpenArrayHandle data,
+void tb_memory_write(const char* inst_name,long long addr, int len, const svOpenArrayHandle data,
                      const svOpenArrayHandle strb) {
-    std::cout << "[TB] Write"<<len*8<< " "<<std::hex << addr << std::dec << "\n";
+    std::cout << "[ "<<inst_name<<" ] Write"<<len*8<< " "<<std::hex << addr << std::dec << "\n";
     const void *data_ptr = svGetArrayPtr(data);
     const void *strb_ptr = svGetArrayPtr(strb);
     assert(data_ptr);

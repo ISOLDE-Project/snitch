@@ -4,14 +4,15 @@
 //
 // Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
 // Florian Zaruba <zarubaf@iis.ee.ethz.ch>
-
 module tb_memory_regbus #(
   /// Regbus address width.
   parameter int unsigned AddrWidth  = 0,
   /// Regbus data width.
   parameter int unsigned DataWidth  = 0,
   parameter type req_t = logic,
-  parameter type rsp_t = logic
+  parameter type rsp_t = logic,
+  /// Instance name
+  parameter string instance_name = ""
 )(
   input  logic clk_i,
   input  logic rst_ni,
@@ -22,11 +23,13 @@ module tb_memory_regbus #(
   `include "register_interface/assign.svh"
 
   import "DPI-C" function void tb_memory_read(
+    input string inst_name,
     input longint addr,
     input int len,
     output byte data[]
   );
   import "DPI-C" function void tb_memory_write(
+    input string inst_name,
     input longint addr,
     input int len,
     input byte data[],
@@ -59,7 +62,7 @@ module tb_memory_regbus #(
           strb[i] = regb.wstrb[i];
           // verilog_lint: waive-start always-ff-non-blocking
         end
-        tb_memory_write((regb.addr >> BusAlign) << BusAlign, NumBytes, data, strb);
+        tb_memory_write(instance_name, (regb.addr >> BusAlign) << BusAlign, NumBytes, data, strb);
       end
     end
   end
@@ -68,7 +71,7 @@ module tb_memory_regbus #(
   always_comb begin
     if (regb.valid) begin
       automatic byte data[NumBytes];
-      tb_memory_read((regb.addr >> BusAlign) << BusAlign, NumBytes, data);
+      tb_memory_read(instance_name, (regb.addr >> BusAlign) << BusAlign, NumBytes, data);
       for (int i = 0; i < NumBytes; i++) begin
         regb.rdata[i*8+:8] = data[i];
       end

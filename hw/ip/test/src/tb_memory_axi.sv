@@ -17,7 +17,9 @@ module tb_memory_axi #(
   /// Atomic memory support.
   parameter bit unsigned ATOPSupport = 1,
   parameter type req_t = logic,
-  parameter type rsp_t = logic
+  parameter type rsp_t = logic,
+    /// Instance name
+  parameter string instance_name = "tb_memory_axi"
 )(
   input  logic clk_i,
   input  logic rst_ni,
@@ -118,7 +120,8 @@ module tb_memory_axi #(
     .AddrWidth (AxiAddrWidth),
     .DataWidth (AxiDataWidth),
     .req_t (regbus_req_t),
-    .rsp_t (regbus_rsp_t)
+    .rsp_t (regbus_rsp_t),
+    .instance_name(instance_name)
   ) i_tb_memory_regbus (
     .clk_i,
     .rst_ni,
