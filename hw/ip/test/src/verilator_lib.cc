@@ -6,10 +6,14 @@
 
 #include "Vtestharness.h"
 #include "Vtestharness__Dpi.h"
+#include "logger.hpp"
 #include "sim.hh"
 #include "tb_lib.hh"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
+
+DECLARE_LOGGER(MemAccess, logs/MemAccess.csv)
+
 namespace sim {
 
 // Number of cycles between HTIF checks.
@@ -40,6 +44,13 @@ int Sim::run() {
 }
 
 void Sim::main() {
+    // intialise csv file
+    {
+        std::ostringstream asc;
+        asc << "mem_port,access,len,address\n";
+        MemAccess::getInstance().header(asc);
+    }
+
     // Initialize verilator environment.
     Verilated::traceEverOn(true);
     // Allocate the simulation state and VCD trace.
@@ -81,16 +92,28 @@ void Sim::main() {
 double sc_time_stamp() { return sim::TIME * 1e-9; }
 
 // DPI calls.
-void tb_memory_read(const char* inst_name,long long addr, int len, const svOpenArrayHandle data) {
-   std::cout << "[ "<<inst_name<<" ] Read"<<len*8 << " "<<std::hex << addr << std::dec <<"\n";
+void tb_memory_read(const char *inst_name, long long addr, int len,
+                    const svOpenArrayHandle data) {
+    {
+        std::ostringstream out;
+        out << inst_name << ",Read," << len * 8 << "," << std::hex << addr
+            << std::dec<<"\n";
+        MemAccess::getInstance().info(out);
+    }
     void *data_ptr = svGetArrayPtr(data);
     assert(data_ptr);
     sim::MEM.read(addr, len, (uint8_t *)data_ptr);
 }
 
-void tb_memory_write(const char* inst_name,long long addr, int len, const svOpenArrayHandle data,
+void tb_memory_write(const char *inst_name, long long addr, int len,
+                     const svOpenArrayHandle data,
                      const svOpenArrayHandle strb) {
-    std::cout << "[ "<<inst_name<<" ] Write"<<len*8<< " "<<std::hex << addr << std::dec << "\n";
+    {
+        std::ostringstream out;
+        out << inst_name << ",Write," << len * 8 << "," << std::hex << addr
+            << std::dec<<"\n";
+        MemAccess::getInstance().info(out);
+    }
     const void *data_ptr = svGetArrayPtr(data);
     const void *strb_ptr = svGetArrayPtr(strb);
     assert(data_ptr);
