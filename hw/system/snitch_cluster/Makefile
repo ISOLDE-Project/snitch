@@ -176,7 +176,7 @@ $(GENERATED_DIR)/bootdata.cc: ${CFG} ${CLUSTER_GEN_PREREQ} | $(GENERATED_DIR)
 # Verilator #
 #############
 
-.PHONY: clean-vlt clean-generated
+.PHONY: clean-vlt clean-generated 
 
 # Clean all build directories and temporary files for Questasim simulation
 clean-vlt: clean-work
@@ -187,7 +187,9 @@ clean-vlt: clean-work
 
 clean-generated:
 	rm -rf generated
-
+generate: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/bootdata.cc
+	echo done
+	
 $(VLT_BUILDDIR)/files: Bender.yml
 	$(BENDER) script verilator $(VLT_BENDER) >$@
 	touch $@
