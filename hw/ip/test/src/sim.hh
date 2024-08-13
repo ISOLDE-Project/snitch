@@ -5,6 +5,8 @@
 #pragma once
 #include <fesvr/context.h>
 #include <fesvr/htif.h>
+#include <verilated.h>
+#include <verilated_vcd_c.h>
 
 #include <chrono>
 #include <iomanip>
@@ -45,8 +47,10 @@ struct Sim : htif_t {
    private:
     context_t *host;
     context_t target;
-    bool vlt_vcd = false;
+    // bool vlt_vcd = false;
     bool disable_preloading = false;
+    const std::unique_ptr<VerilatedContext> contextp;
+    vluint64_t main_time;
 };
 
 void sim_thread_main(void *arg);

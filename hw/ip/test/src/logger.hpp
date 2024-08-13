@@ -43,7 +43,7 @@ struct LoggerInterface;
 #define DECLARE_LOGGER(class, fileName)           \
     namespace {                                   \
     struct class##_LogFile {                      \
-        static constexpr char name[] = #fileName; \
+        static constexpr char name[] = fileName; \
     };                                            \
     using class = isolde::Logger<class##_LogFile>; \
     };

@@ -9,10 +9,8 @@
 #include "logger.hpp"
 #include "sim.hh"
 #include "tb_lib.hh"
-#include "verilated.h"
-#include "verilated_vcd_c.h"
 
-DECLARE_LOGGER(MemAccess, logs/MemAccess.csv)
+DECLARE_LOGGER(MemAccess, "logs/MemAccess.csv")
 
 namespace sim {
 
@@ -21,17 +19,27 @@ const int HTIFTimeInterval = 200;
 void sim_thread_main(void *arg) { ((Sim *)arg)->main(); }
 
 // Sim time.
-int TIME = 0;
+// int TIME = 0;
 
-Sim::Sim(int argc, char **argv) : htif_t(argc, argv) {
+Sim::Sim(int argc, char **argv)
+    : htif_t(argc, argv), contextp{new VerilatedContext}, main_time(0) {
     // Search arguments for `--vcd` flag and enable waves if requested
-    for (auto i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--vcd") == 0) {
-            printf("VCD wave generation enabled\n");
-            vlt_vcd = true;
-        }
-    }
-    Verilated::commandArgs(argc, argv);
+    // Create logs/ directory in case we have traces to put under it
+   // Verilated::mkdir("logs");
+    // Set debug level, 0 is off, 9 is highest presently used
+    // May be overridden by commandArgs argument parsing
+    contextp->debug(0);
+
+    // Randomization reset policy
+    // May be overridden by commandArgs argument parsing
+    contextp->randReset(2);
+
+    // Verilator must compute traced signals
+    contextp->traceEverOn(true);
+
+    // Pass arguments so Verilated code can see them, e.g. $value$plusargs
+    // This needs to be called before you create any model
+    contextp->commandArgs(argc, argv);
 }
 
 void Sim::idle() { target.switch_to(); }
@@ -52,44 +60,59 @@ void Sim::main() {
     }
 
     // Initialize verilator environment.
-    Verilated::traceEverOn(true);
+    // Verilated::traceEverOn(true);
     // Allocate the simulation state and VCD trace.
-    auto top = std::make_unique<Vtestharness>();
-    auto vcd = std::make_unique<VerilatedVcdC>();
+    // auto top = std::make_unique<Vtestharness>();
+    const std::unique_ptr<Vtestharness> top{
+        new Vtestharness{contextp.get(), "TOP"}};
+    auto tfp = std::make_unique<VerilatedVcdC>();
 
+    top->trace(tfp.get(), 8);  // Trace 99 levels of hierarchy
+    Verilated::mkdir("logs");
+    tfp->open("logs/sim.vcd");
     bool clk_i = 0, rst_ni = 0;
-
+    contextp->time(0);
     // Trace 8 levels of hierarchy.
-    if (vlt_vcd) {
-        top->trace(vcd.get(), 8);
-        vcd->open("sim.vcd");
-        vcd->dump(TIME);
-    }
-    TIME += 2;
+    // if (vlt_vcd) {
+    //     top->trace(vcd.get(), 8);
+    //     vcd->open("sim.vcd");
+    //     vcd->dump(TIME);
+    // }
+    // TIME += 2;
 
-    while (!Verilated::gotFinish()) {
+    while (!contextp->gotFinish()) {
+        contextp->timeInc(1);
+
         clk_i = !clk_i;
-        rst_ni = TIME >= 8;
+        rst_ni = main_time >= 8;
         top->clk_i = clk_i;
         top->rst_ni = rst_ni;
         // Evaluate the DUT.
+        // Evaluate model
+        // (If you have multiple models being simulated in the same
+        // timestep then instead of eval(), call eval_step() on each, then
+        // eval_end_step() on each. See the manual.)
         top->eval();
-        if (vlt_vcd) vcd->dump(TIME);
-        // Increase global time.
-        TIME++;
+        tfp->dump(main_time);
+        main_time++;
         // Switch to the HTIF interface in regular intervals.
-        if (TIME % HTIFTimeInterval == 0) {
+        if (main_time % HTIFTimeInterval == 0) {
             host->switch_to();
         }
     }
 
-    // Clean up.
-    if (vlt_vcd) vcd->close();
+    // Final model cleanup
+    top->final();
+    tfp->close();
+    // printf("main_time=%fns\n",
+    //        ((double)main_time) / (-contextp->timeprecision()));
+    // Final simulation summary
+    contextp->statsPrintSummary();
 }
 }  // namespace sim
 
 // Verilator callback to get the current time.
-double sc_time_stamp() { return sim::TIME * 1e-9; }
+//double sc_time_stamp() { return sim::TIME * 1e-9; }
 
 // DPI calls.
 void tb_memory_read(const char *inst_name, long long addr, int len,
@@ -97,7 +120,7 @@ void tb_memory_read(const char *inst_name, long long addr, int len,
     {
         std::ostringstream out;
         out << inst_name << ",Read," << len * 8 << "," << std::hex << addr
-            << std::dec<<"\n";
+            << std::dec << "\n";
         MemAccess::getInstance().info(out);
     }
     void *data_ptr = svGetArrayPtr(data);
@@ -111,7 +134,7 @@ void tb_memory_write(const char *inst_name, long long addr, int len,
     {
         std::ostringstream out;
         out << inst_name << ",Write," << len * 8 << "," << std::hex << addr
-            << std::dec<<"\n";
+            << std::dec << "\n";
         MemAccess::getInstance().info(out);
     }
     const void *data_ptr = svGetArrayPtr(data);
