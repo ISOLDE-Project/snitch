@@ -22,12 +22,9 @@ This generates the following files:
 You can run a binary on the simulator by passing it as a command-line argument
 to `bin/snitch_cluster`, for example:
 
-    bin/snitch_cluster.vlt sw/qsort/build/quicksort
+     bin/snitch_cluster.vlt ../../../sw/qsort/build/quicksort
 
-Questasim simulation can be run in GUI mode with Wave-Format scripts in `wave/*.do`
 
-    bin/snitch_cluster.vsim.gui sw/alive
-    VSIM> do wave/all_cores.do
 
 ## Traces
 

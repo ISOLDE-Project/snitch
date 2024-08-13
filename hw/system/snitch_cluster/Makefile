@@ -176,13 +176,11 @@ $(GENERATED_DIR)/bootdata.cc: ${CFG} ${CLUSTER_GEN_PREREQ} | $(GENERATED_DIR)
 # Verilator #
 #############
 
-.PHONY: clean-vlt clean-generated 
+.PHONY: clean-vlt clean-generated
 
 # Clean all build directories and temporary files for Questasim simulation
-clean-vlt: clean-work
-	rm -fv $(VLT_BUILDDIR)/*Vtestharness*.*
-	rm -fv $(VLT_BUILDDIR)/files
-	rm -fv $(VLT_BUILDDIR)/verilated*
+clean-vlt: 
+	rm -frv $(VLT_BUILDDIR)
 	rm -fv $(BIN_DIR)/$(TARGET).vlt
 
 clean-generated:
@@ -191,17 +189,19 @@ generate: $(GENERATED_DIR)/snitch_cluster_wrapper.sv $(GENERATED_DIR)/bootdata.c
 	echo done
 	
 $(VLT_BUILDDIR)/files: Bender.yml
+	mkdir -p $(dir $@)
 	$(BENDER) script verilator $(VLT_BENDER) >$@
 	touch $@
 
-$(BIN_DIR)/$(TARGET).vlt: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} ${VLT_BUILDDIR}/lib/libfesvr.a
+$(BIN_DIR)/$(TARGET).vlt: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} riscv-isa-sim/lib/libfesvr.a
 	mkdir -p $(dir $@)
 	$(VLT) $(VLT_FLAGS) -Mdir $(VLT_BUILDDIR) \
 		-f $(VLT_BUILDDIR)/files \
 		-CFLAGS "$(VLT_CFLAGS)" \
-		-LDFLAGS "-Llib -lfesvr -lpthread" \
-		-o ../$@ --cc --exe --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
+		-LDFLAGS "-L${MKFILE_DIR}/riscv-isa-sim/lib -lfesvr -lpthread" \
+		-o ../$@ --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
 	$(MAKE) -C $(VLT_BUILDDIR) -j $(shell nproc) -f Vtestharness.mk
+
 
 ##reports
 $(BIN_DIR)/report.json: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} 
