@@ -180,7 +180,7 @@ $(GENERATED_DIR)/bootdata.cc: ${CFG} ${CLUSTER_GEN_PREREQ} | $(GENERATED_DIR)
 
 # Clean all build directories and temporary files for Questasim simulation
 clean-vlt: 
-	rm -frv $(VLT_BUILDDIR)
+	rm -fr $(VLT_BUILDDIR)
 	rm -fv $(BIN_DIR)/$(TARGET).vlt
 
 clean-generated:
@@ -202,7 +202,8 @@ $(BIN_DIR)/$(TARGET).vlt: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCE
 		-o ../$@ --top-module testharness $(TB_CC_SOURCES) $(VLT_CC_SOURCES)
 	$(MAKE) -C $(VLT_BUILDDIR) -j $(shell nproc) -f Vtestharness.mk
 
-
+test: $(BIN_DIR)/$(TARGET).vlt
+	bin/snitch_cluster.vlt ../../../sw/qsort/build/quicksort
 ##reports
 $(BIN_DIR)/report.json: $(VLT_BUILDDIR)/files ${TB_CC_SOURCES} ${VLT_CC_SOURCES} 
 	mkdir -p $(dir $@)
