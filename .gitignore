@@ -16,3 +16,8 @@ logs
 install/
 install
 build/
+*lru*
+files
+*.dot
+code_image.py
+*.svg

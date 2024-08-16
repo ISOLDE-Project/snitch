@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-// Cluster configuration for a simple testbench system.
+// Single-core configuration.
 {
     nr_s1_quadrant: 1,
     s1_quadrant: {
@@ -14,15 +14,15 @@
         cluster_base_addr: 268435456, // 0x1000_0000
         cluster_base_offset: 0, // 0x0
         cluster_base_hartid: 0,
-        addr_width: 32,
-        data_width: 32,
+        addr_width: 48,
+        data_width: 64,
         tcdm: {
             size: 128,
             banks: 32,
         },
         cluster_periph_size: 64, // kB
         zero_mem_size: 64, // kB
-        dma_data_width: 32,
+        dma_data_width: 512,
         dma_axi_req_fifo_depth: 3,
         dma_req_fifo_depth: 3,
         // Timing parameters
@@ -37,16 +37,10 @@
             lat_conv: 1,
             lat_sdotp: 2,
             fpu_pipe_config: "BEFORE"
-            narrow_xbar_latency: "CUT_ALL_PORTS",
-            wide_xbar_latency: "CUT_ALL_PORTS",
-            // Isolate the core.
-            register_core_req: true,
-            register_core_rsp: true,
-            register_offload_req: true,
-            register_offload_rsp: true
-        },
+            narrow_xbar_latency: "NO_LATENCY",
+            wide_xbar_latency: "NO_LATENCY",
+        }
         hives: [
-            // Hive 0
             {
                 icache: {
                     size: 8, // total instruction cache size in kByte
@@ -55,9 +49,8 @@
                 },
                 cores: [
                     { $ref: "#/compute_core_template" },
-                    { $ref: "#/dma_core_template" },
                 ]
-            }
+            },
         ]
     },
     dram: {
@@ -77,9 +70,9 @@
     // Templates.
     compute_core_template: {
         isa: "rv32imafd",
-        xssr: true,
-        xfrep: true,
-        xdma: false,
+        xssr: true
+        xfrep: true
+        xdma: true
         xf16: true,
         xf16alt: true,
         xf8: true,
@@ -96,25 +89,4 @@
         // Enable division/square root unit
         // Xdiv_sqrt: true,
     },
-    dma_core_template: {
-        isa: "rv32imafd",
-        // Xdiv_sqrt: true,
-        # isa: "rv32ema",
-        xdma: true
-        xssr: false
-        xfrep: false
-        xf16: false,
-        xf16alt: false,
-        xf8: false,
-        xf8alt: false,
-        xfdotp: false,
-        xfvec: false,
-        num_int_outstanding_loads: 1,
-        num_int_outstanding_mem: 4,
-        num_fp_outstanding_loads: 4,
-        num_fp_outstanding_mem: 4,
-        num_sequencer_instructions: 16,
-        num_dtlb_entries: 1,
-        num_itlb_entries: 1,
-    }
 }

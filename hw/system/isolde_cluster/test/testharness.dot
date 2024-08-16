@@ -1,0 +1,160 @@
+digraph test_harness {
+
+  rankdir=LR;
+
+  subgraph cluster_0 {
+    label="Test Harness";
+    clk_i [shape=box];
+    rst_ni [shape=box];
+    testharness [shape=box];
+  }
+
+  subgraph cluster_1 {
+    label="Snitch Cluster";
+    snitch_cluster [shape=box];
+    msip [shape=box];
+  }
+
+  subgraph cluster_2 {
+    label="Memory (Narrow)";
+    tb_memory_axi_narrow [shape=box];
+    memory_narrow [shape=box];
+  }
+
+  subgraph cluster_3 {
+    label="Memory (Wide)";
+    tb_memory_axi_wide [shape=box];
+    memory_wide [shape=box];
+  }
+
+  /* Clock and Reset signals */
+  clk_i -> testharness;
+  rst_ni -> testharness;
+  testharness -> snitch_cluster [label="clk_i, rst_ni"];
+
+  /* Snitch Cluster signals */
+  testharness -> snitch_cluster [label="msip"];
+  snitch_cluster -> testharness [label="narrow_in_req, wide_in_req"];
+  testharness -> snitch_cluster [label="narrow_out_resp, wide_out_resp"];
+  snitch_cluster -> testharness [label="narrow_out_req, wide_out_req"];
+
+  /* Memory Connections (Narrow) */
+  testharness -> tb_memory_axi_narrow [label="narrow_out_req"];
+  tb_memory_axi_narrow -> testharness [label="narrow_out_resp"];
+  tb_memory_axi_narrow -> memory_narrow;
+
+   /* Memory Connections (Wide) */
+  testharness -> tb_memory_axi_wide [label="wide_out_req"];
+  tb_memory_axi_wide -> testharness [label="wide_out_resp"];
+  tb_memory_axi_wide -> memory_wide;
+
+  {rank=same; clk_i; rst_ni;}
+  {rank=same; testharness; snitch_cluster;}digraph test_harness {
+
+  rankdir=LR;
+
+  subgraph cluster_0 {
+    label="Test Harness";
+    clk_i [shape=box];
+    rst_ni [shape=box];
+    testharness [shape=box];
+  }
+
+  subgraph cluster_1 {
+    label="Snitch Cluster";
+    snitch_cluster [shape=box];
+    msip [shape=box];
+  }
+
+  subgraph cluster_2 {
+    label="Memory (Narrow)";
+    tb_memory_axi_narrow [shape=box];
+    memory_narrow [shape=box];
+  }
+
+  subgraph cluster_3 {
+    label="Memory (Wide)";
+    tb_memory_axi_wide [shape=box];
+    memory_wide [shape=box];
+  }
+
+  /* Clock and Reset signals */
+  clk_i -> testharness;
+  rst_ni -> testharness;
+  testharness -> snitch_cluster [label="clk_i, rst_ni"];
+
+  /* Snitch Cluster signals */
+  testharness -> snitch_cluster [label="msip"];
+  snitch_cluster -> testharness [label="narrow_in_req, wide_in_req"];
+  testharness -> snitch_cluster [label="narrow_out_resp, wide_out_resp"];
+  snitch_cluster -> testharness [label="narrow_out_req, wide_out_req"];
+
+  /* Memory Connections (Narrow) */
+  testharness -> tb_memory_axi_narrow [label="narrow_out_req"];
+  tb_memory_axi_narrow -> testharness [label="narrow_out_resp"];
+  tb_memory_axi_narrow -> memory_narrow;
+
+   /* Memory Connections (Wide) */digraph test_harness {
+
+  rankdir=LR;
+
+  subgraph cluster_0 {
+    label="Test Harness";
+    clk_i [shape=box];
+    rst_ni [shape=box];
+    testharness [shape=box];
+  }
+
+  subgraph cluster_1 {
+    label="Snitch Cluster";
+    snitch_cluster [shape=box];
+    msip [shape=box];
+  }
+
+  subgraph cluster_2 {
+    label="Memory (Narrow)";
+    tb_memory_axi_narrow [shape=box];
+    memory_narrow [shape=box];
+  }
+
+  subgraph cluster_3 {
+    label="Memory (Wide)";
+    tb_memory_axi_wide [shape=box];
+    memory_wide [shape=box];
+  }
+
+  /* Clock and Reset signals */
+  clk_i -> testharness;
+  rst_ni -> testharness;
+  testharness -> snitch_cluster [label="clk_i, rst_ni"];
+
+  /* Snitch Cluster signals */
+  testharness -> snitch_cluster [label="msip"];
+  snitch_cluster -> testharness [label="narrow_in_req, wide_in_req"];
+  testharness -> snitch_cluster [label="narrow_out_resp, wide_out_resp"];
+  snitch_cluster -> testharness [label="narrow_out_req, wide_out_req"];
+
+  /* Memory Connections (Narrow) */
+  testharness -> tb_memory_axi_narrow [label="narrow_out_req"];
+  tb_memory_axi_narrow -> testharness [label="narrow_out_resp"];
+  tb_memory_axi_narrow -> memory_narrow;
+
+   /* Memory Connections (Wide) */
+  testharness -> tb_memory_axi_wide [label="wide_out_req"];
+  tb_memory_axi_wide -> testharness [label="wide_out_resp"];
+  tb_memory_axi_wide -> memory_wide;
+
+  {rank=same; clk_i; rst_ni;}
+  {rank=same; testharness; snitch_cluster;}
+  {rank=same; tb_memory_axi_narrow; tb_memory_axi_wide;}
+}
+  testharness -> tb_memory_axi_wide [label="wide_out_req"];
+  tb_memory_axi_wide -> testharness [label="wide_out_resp"];
+  tb_memory_axi_wide -> memory_wide;
+
+  {rank=same; clk_i; rst_ni;}
+  {rank=same; testharness; snitch_cluster;}
+  {rank=same; tb_memory_axi_narrow; tb_memory_axi_wide;}
+}
+  {rank=same; tb_memory_axi_narrow; tb_memory_axi_wide;}
+}
