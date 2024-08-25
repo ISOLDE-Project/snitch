@@ -48,7 +48,6 @@ module snitch_cc #(
   /// Enable F and D Extension
   parameter bit          RVF                = 1,
   parameter bit          RVD                = 1,
-  parameter bit          XDivSqrt           = 0,
   parameter bit          XF8                = 0,
   parameter bit          XF8ALT             = 0,
   parameter bit          XF16               = 0,
@@ -57,25 +56,10 @@ module snitch_cc #(
   parameter bit          XFDOTP             = 0,
   /// Enable Snitch DMA
   parameter bit          Xdma               = 0,
-  /// Has `frep` support.
-  parameter bit          Xfrep              = 1,
-  /// Has `SSR` support.
-  parameter bit          Xssr               = 1,
-  /// Has `IPU` support.
-  parameter bit          Xipu               = 1,
-  /// Has virtual memory support.
-  parameter bit          VMSupport          = 1,
   parameter int unsigned NumIntOutstandingLoads = 0,
   parameter int unsigned NumIntOutstandingMem = 0,
-  parameter int unsigned NumFPOutstandingLoads = 0,
-  parameter int unsigned NumFPOutstandingMem = 0,
   parameter int unsigned NumDTLBEntries = 0,
   parameter int unsigned NumITLBEntries = 0,
-  parameter int unsigned NumSequencerInstr = 0,
-  parameter int unsigned NumSsrs = 0,
-  parameter int unsigned SsrMuxRespDepth = 0,
-  parameter snitch_ssr_pkg::ssr_cfg_t [NumSsrs-1:0] SsrCfgs = '0,
-  parameter logic [NumSsrs-1:0][4:0] SsrRegs = '0,
   /// Add isochronous clock-domain crossings e.g., make it possible to operate
   /// the core in a slower clock domain.
   parameter bit          IsoCrossing        = 0,
@@ -88,17 +72,9 @@ module snitch_cc #(
   parameter bit          RegisterCoreReq    = 0,
   /// Insert Pipeline registers into data memory path (response)
   parameter bit          RegisterCoreRsp    = 0,
-  /// Insert Pipeline register into the FPU data path (request)
-  parameter bit          RegisterFPUReq     = 0,
-  /// Insert Pipeline registers after sequencer
-  parameter bit          RegisterSequencer  = 0,
-  /// Insert Pipeline registers immediately before FPU datapath
-  parameter bit          RegisterFPUIn      = 0,
-  /// Insert Pipeline registers immediately after FPU datapath
-  parameter bit          RegisterFPUOut     = 0,
   parameter snitch_pma_pkg::snitch_pma_t SnitchPMACfg = '{default: 0},
   /// Derived parameter *Do not override*
-  parameter int unsigned TCDMPorts = (NumSsrs > 1 ? NumSsrs : 1),
+  parameter int unsigned TCDMPorts =  1,
   parameter type addr_t = logic [AddrWidth-1:0],
   parameter type data_t = logic [DataWidth-1:0]
 ) (
@@ -129,17 +105,9 @@ module snitch_cc #(
   input  addr_t                      tcdm_addr_base_i
 );
 
-  // FMA architecture is "merged" -> mulexp and macexp instructions are supported
-  localparam bit XFauxMerged  = (FPUImplementation.UnitTypes[3] == fpnew_pkg::MERGED);
-  localparam bit FPEn = RVF | RVD | XF16 | XF16ALT | XF8 | XF8ALT | XFVEC | XFauxMerged | XFDOTP;
-  localparam int unsigned FLEN = RVD     ? 64 : // D ext.
-                          RVF     ? 32 : // F ext.
-                          XF16    ? 16 : // Xf16 ext.
-                          XF16ALT ? 16 : // Xf16alt ext.
-                          XF8     ? 8 :  // Xf8 ext.
-                          XF8ALT  ? 8 :  // Xf8alt ext.
-                          0;             // Unused in case of no FP
 
+  /// Has virtual memory support.
+  localparam bit          VMSupport          = 0;
   typedef struct packed {
     logic [4:0]  id;
     logic [11:0] word;
@@ -159,21 +127,19 @@ module snitch_cc #(
   acc_resp_t acc_demux_snitch;
   acc_resp_t acc_demux_snitch_q;
   acc_resp_t dma_resp;
-  acc_resp_t ipu_resp;
+  
 
-  acc_resp_t ssr_resp;
 
   logic acc_snitch_demux_qvalid, acc_snitch_demux_qready;
   logic acc_snitch_demux_qvalid_q, acc_snitch_demux_qready_q;
   logic acc_qvalid, acc_qready;
   logic dma_qvalid, dma_qready;
-  logic ipu_qvalid, ipu_qready;
-  logic ssr_qvalid, ssr_qready;
+
 
   logic acc_pvalid, acc_pready;
   logic dma_pvalid, dma_pready;
-  logic ipu_pvalid, ipu_pready;
-  logic ssr_pvalid, ssr_pready;
+ 
+ 
   logic acc_demux_snitch_valid, acc_demux_snitch_ready;
   logic acc_demux_snitch_valid_q, acc_demux_snitch_ready_q;
 
@@ -182,7 +148,7 @@ module snitch_cc #(
   fpnew_pkg::status_t    fpu_status;
 
   snitch_pkg::core_events_t snitch_events;
-  snitch_pkg::core_events_t fpu_events;
+
 
   // Snitch Integer Core
   dreq_t snitch_dreq_d, snitch_dreq_q, merged_dreq;
@@ -209,20 +175,20 @@ module snitch_cc #(
     .NumDTLBEntries (NumDTLBEntries),
     .NumITLBEntries (NumITLBEntries),
     .RVE (RVE),
-    .FP_EN (FPEn),
+    .FP_EN (1'b0),
     .Xdma (Xdma),
-    .Xssr (Xssr),
-    .RVF (RVF),
-    .RVD (RVD),
-    .XDivSqrt (XDivSqrt),
-    .XF16 (XF16),
-    .XF16ALT (XF16ALT),
-    .XF8 (XF8),
-    .XF8ALT (XF8ALT),
-    .XFVEC (XFVEC),
-    .XFDOTP (XFDOTP),
-    .XFAUX (XFauxMerged),
-    .FLEN (FLEN)
+    .Xssr (1'b0),
+    .RVF (1'b0),
+    .RVD (1'b0),
+    .XDivSqrt (1'b0),
+    .XF16 (1'b0),
+    .XF16ALT (1'b0),
+    .XF8 (1'b0),
+    .XF8ALT (1'b0),
+    .XFVEC (1'b0),
+    .XFDOTP (1'b0)
+    //.XFAUX (XFauxMerged),
+   // .FLEN (FLEN)
   ) i_snitch (
     .clk_i ( clk_d2_i ), // if necessary operate on half the frequency
     .rst_i ( ~rst_ni ),
@@ -309,13 +275,13 @@ module snitch_cc #(
 
   // Accelerator Demux Port
   stream_demux #(
-    .N_OUP ( 5 )
+    .N_OUP ( 3 )
   ) i_stream_demux_offload (
     .inp_valid_i  ( acc_snitch_demux_qvalid_q  ),
     .inp_ready_o  ( acc_snitch_demux_qready_q  ),
     .oup_sel_i    ( acc_snitch_demux_q.addr[$clog2(5)-1:0]             ),
-    .oup_valid_o  ( {ssr_qvalid, ipu_qvalid, dma_qvalid, hive_req_o.acc_qvalid, acc_qvalid} ),
-    .oup_ready_i  ( {ssr_qready, ipu_qready, dma_qready, hive_rsp_i.acc_qready, acc_qready} )
+    .oup_valid_o  ( { dma_qvalid, hive_req_o.acc_qvalid, acc_qvalid} ),
+    .oup_ready_i  ( { dma_qready, hive_rsp_i.acc_qready, acc_qready} )
   );
 
   // To shared muldiv
@@ -324,13 +290,13 @@ module snitch_cc #(
 
   stream_arbiter #(
     .DATA_T      ( acc_resp_t ),
-    .N_INP       ( 5          )
+    .N_INP       ( 3          )
   ) i_stream_arbiter_offload (
     .clk_i       ( clk_i                                   ),
     .rst_ni      ( rst_ni                                  ),
-    .inp_data_i  ( {ssr_resp,   ipu_resp,   dma_resp,   hive_rsp_i.acc_resp,   acc_seq    } ),
-    .inp_valid_i ( {ssr_pvalid, ipu_pvalid, dma_pvalid, hive_rsp_i.acc_pvalid, acc_pvalid } ),
-    .inp_ready_o ( {ssr_pready, ipu_pready, dma_pready, hive_req_o.acc_pready, acc_pready } ),
+    .inp_data_i  ( { dma_resp,   hive_rsp_i.acc_resp,   acc_seq    } ),
+    .inp_valid_i ( { dma_pvalid, hive_rsp_i.acc_pvalid, acc_pvalid } ),
+    .inp_ready_o ( { dma_pready, hive_req_o.acc_pready, acc_pready } ),
     .oup_data_o  ( acc_demux_snitch_q                      ),
     .oup_valid_o ( acc_demux_snitch_valid_q                ),
     .oup_ready_i ( acc_demux_snitch_ready_q                )
@@ -385,160 +351,19 @@ module snitch_cc #(
     assign axi_dma_perf_o  = '0;
   end
 
-  if (Xipu) begin : gen_ipu
-    snitch_int_ss # (
-      .AddrWidth (AddrWidth),
-      .DataWidth (DataWidth),
-      .NumIPUSequencerInstr (NumSequencerInstr),
-      .acc_req_t (acc_req_t),
-      .acc_resp_t (acc_resp_t)
-    ) i_snitch_int_ss (
-      .clk_i            ( clk_i                    ),
-      .rst_i            ( (~rst_ni) | (~rst_int_ss_ni) ),
-      .acc_req_i        ( acc_snitch_req           ),
-      .acc_req_valid_i  ( ipu_qvalid               ),
-      .acc_req_ready_o  ( ipu_qready               ),
-      .acc_resp_o       ( ipu_resp                 ),
-      .acc_resp_valid_o ( ipu_pvalid               ),
-      .acc_resp_ready_i ( ipu_pready               ),
-      .ssr_raddr_o      ( /* TODO */               ),
-      .ssr_rdata_i      ('0                        ),
-      .ssr_rvalid_o     ( /* TODO */               ),
-      .ssr_rready_i     ('0                        ),
-      .ssr_rdone_o      ( /* TODO */               ),
-      .ssr_waddr_o      ( /* TODO */               ),
-      .ssr_wdata_o      ( /* TODO */               ),
-      .ssr_wvalid_o     ( /* TODO */               ),
-      .ssr_wready_i     ('0                        ),
-      .ssr_wdone_o      ( /* TODO */               ),
-      .streamctl_done_i   ( /* TODO */             ),
-      .streamctl_valid_i  ( /* TODO */             ),
-      .streamctl_ready_o  ( /* TODO */             )
-    );
-  end else begin : gen_no_ipu
-    assign ipu_resp = '0;
-    assign ipu_qready = 1'b0;
-    assign ipu_pvalid = '0;
-  end
+
+    
+  
+  
+
 
   // pragma translate_off
   snitch_pkg::fpu_trace_port_t fpu_trace;
   snitch_pkg::fpu_sequencer_trace_port_t fpu_sequencer_trace;
   // pragma translate_on
 
-  logic  [2:0][4:0] ssr_raddr;
-  data_t [2:0]      ssr_rdata;
-  logic  [2:0]      ssr_rvalid;
-  logic  [2:0]      ssr_rready;
-  logic  [2:0]      ssr_rdone;
-  logic  [0:0][4:0] ssr_waddr;
-  data_t [0:0]      ssr_wdata;
-  logic  [0:0]      ssr_wvalid;
-  logic  [0:0]      ssr_wready;
-  logic  [0:0]      ssr_wdone;
-  logic             ssr_streamctl_done;
-  logic             ssr_streamctl_valid;
-  logic             ssr_streamctl_ready;
-
-  if (FPEn) begin : gen_fpu
-    snitch_pkg::core_events_t fp_ss_core_events;
-
-    dreq_t fpu_dreq;
-    drsp_t fpu_drsp;
-
-    snitch_fp_ss #(
-      .AddrWidth (AddrWidth),
-      .DataWidth (DataWidth),
-      .NumFPOutstandingLoads (NumFPOutstandingLoads),
-      .NumFPOutstandingMem (NumFPOutstandingMem),
-      .NumFPUSequencerInstr (NumSequencerInstr),
-      .FPUImplementation (FPUImplementation),
-      .NumSsrs (NumSsrs),
-      .SsrRegs (SsrRegs),
-      .dreq_t (dreq_t),
-      .drsp_t (drsp_t),
-      .acc_req_t (acc_req_t),
-      .acc_resp_t (acc_resp_t),
-      .RegisterSequencer (RegisterSequencer),
-      .RegisterFPUIn (RegisterFPUIn),
-      .RegisterFPUOut (RegisterFPUOut),
-      .Xfrep (Xfrep),
-      .Xssr (Xssr),
-      .RVF (RVF),
-      .RVD (RVD),
-      .XF16 (XF16),
-      .XF16ALT (XF16ALT),
-      .XF8 (XF8),
-      .XF8ALT (XF8ALT),
-      .XFVEC (XFVEC),
-      .FLEN (FLEN)
-    ) i_snitch_fp_ss (
-      .clk_i,
-      .rst_i            ( ~rst_ni | (~rst_fp_ss_ni)   ),
-      // pragma translate_off
-      .trace_port_o            ( fpu_trace           ),
-      .sequencer_tracer_port_o ( fpu_sequencer_trace ),
-      // pragma translate_on
-      .acc_req_i        ( acc_snitch_req ),
-      .acc_req_valid_i  ( acc_qvalid     ),
-      .acc_req_ready_o  ( acc_qready     ),
-      .acc_resp_o       ( acc_seq        ),
-      .acc_resp_valid_o ( acc_pvalid     ),
-      .acc_resp_ready_i ( acc_pready     ),
-      .data_req_o       ( fpu_dreq       ),
-      .data_rsp_i       ( fpu_drsp       ),
-      .fpu_rnd_mode_i   ( fpu_rnd_mode   ),
-      .fpu_fmt_mode_i   ( fpu_fmt_mode   ),
-      .fpu_status_o     ( fpu_status     ),
-      .ssr_raddr_o      ( ssr_raddr      ),
-      .ssr_rdata_i      ( ssr_rdata      ),
-      .ssr_rvalid_o     ( ssr_rvalid     ),
-      .ssr_rready_i     ( ssr_rready     ),
-      .ssr_rdone_o      ( ssr_rdone      ),
-      .ssr_waddr_o      ( ssr_waddr      ),
-      .ssr_wdata_o      ( ssr_wdata      ),
-      .ssr_wvalid_o     ( ssr_wvalid     ),
-      .ssr_wready_i     ( ssr_wready     ),
-      .ssr_wdone_o      ( ssr_wdone      ),
-      .streamctl_done_i   ( ssr_streamctl_done  ),
-      .streamctl_valid_i  ( ssr_streamctl_valid ),
-      .streamctl_ready_o  ( ssr_streamctl_ready ),
-      .core_events_o      ( fp_ss_core_events   )
-    );
-
-    reqrsp_mux #(
-      .NrPorts (2),
-      .AddrWidth (AddrWidth),
-      .DataWidth (DataWidth),
-      .req_t (dreq_t),
-      .rsp_t (drsp_t),
-      // TODO(zarubaf): Wire-up to top-level.
-      .RespDepth (8),
-      .RegisterReq ({RegisterFPUReq, 1'b0})
-    ) i_reqrsp_mux (
-      .clk_i,
-      .rst_ni,
-      .slv_req_i ({fpu_dreq, snitch_dreq_q}),
-      .slv_rsp_o ({fpu_drsp, snitch_drsp_q}),
-      .mst_req_o (merged_dreq),
-      .mst_rsp_i (merged_drsp),
-      .idx_o (/*not connected*/)
-    );
-
-    assign core_events_o.issue_fpu = fp_ss_core_events.issue_fpu;
-    assign core_events_o.issue_fpu_seq = fp_ss_core_events.issue_fpu_seq;
-    assign core_events_o.issue_core_to_fpu = fp_ss_core_events.issue_core_to_fpu;
-
-  end else begin : gen_no_fpu
+ begin : gen_no_fpu
     assign fpu_status = '0;
-
-    assign ssr_raddr = '0;
-    assign ssr_rvalid = '0;
-    assign ssr_rdone = '0;
-    assign ssr_waddr = '0;
-    assign ssr_wdata = '0;
-    assign ssr_wvalid = '0;
-    assign ssr_wdone = '0;
 
     assign acc_qready    = '0;
     assign acc_seq.data  = '0;
@@ -625,173 +450,12 @@ module snitch_cc #(
     .tcdm_rsp_i (core_tcdm_rsp)
   );
 
-  // ----
-  // SSRs
-  // ----
-  if (Xssr) begin : gen_ssrs
-    tcdm_req_t [NumSsrs-1:0] ssr_req;
-    tcdm_rsp_t [NumSsrs-1:0] ssr_rsp;
-    tcdm_req_t tcdm_req;
-    tcdm_rsp_t tcdm_rsp;
-
-    ssr_cfg_req_t ssr_cfg_req, cfg_req;
-    ssr_cfg_rsp_t ssr_cfg_rsp, cfg_rsp;
-
-    logic cfg_req_valid, cfg_req_valid_q;
-    logic cfg_req_wready, cfg_req_ready, cfg_req_hs;
-    logic [31:0] cfg_rsp_data;
-    assign cfg_req_ready = ~cfg_req.write | cfg_req_wready;
-    assign cfg_req_hs = cfg_req_valid & cfg_req_ready;
-    `FF(cfg_req_valid_q, cfg_req_hs, 0)
-    `FFL(cfg_rsp.id, ssr_cfg_req.id, cfg_req_hs, 0)
-    `FFL(cfg_rsp.data, cfg_rsp_data, cfg_req_hs, 0)
-
-    always_comb begin
-      import riscv_instr::*;
-      automatic logic [11:0] addr;
-      automatic logic [4:0] addr_dm;
-      automatic logic [6:0] addr_reg;
-
-      ssr_cfg_req.id = acc_snitch_demux_q.id;
-      ssr_cfg_req.data = acc_snitch_demux_q.data_arga[31:0];
-      ssr_cfg_req.word = '0;
-      ssr_cfg_req.write = '0;
-
-      addr = '0;
-      unique casez (acc_snitch_demux_q.data_op)
-        SCFGRI,
-        SCFGWI: begin
-          addr = acc_snitch_demux_q.data_op[31:20];
-        end
-        SCFGR,
-        SCFGW: begin
-          addr = acc_snitch_demux_q.data_argb[31:0];
-        end
-        default: ;
-      endcase
-
-      addr_reg = addr[11:5];
-      addr_dm = addr[4:0];
-      ssr_cfg_req.word = {addr_dm, addr_reg};
-
-      unique casez (acc_snitch_demux_q.data_op)
-        SCFGRI,
-        SCFGR:
-          ssr_cfg_req.write = '0;
-        SCFGWI,
-        SCFGW: begin
-          ssr_cfg_req.write = '1;
-          ssr_cfg_req.id = '0; // prevent write-back of result
-        end
-        default: ;
-      endcase
-    end
-
-    assign ssr_resp.id = ssr_cfg_rsp.id;
-    assign ssr_resp.error = 1'b0;
-    assign ssr_resp.data = ssr_cfg_rsp.data;
-
-    stream_to_mem #(
-      .mem_req_t (ssr_cfg_req_t),
-      .mem_resp_t (ssr_cfg_rsp_t),
-      .BufDepth (1)
-    ) i_stream_to_mem (
-      .clk_i,
-      .rst_ni,
-      .req_i (ssr_cfg_req),
-      .req_valid_i (ssr_qvalid),
-      .req_ready_o (ssr_qready),
-      .resp_o (ssr_cfg_rsp),
-      .resp_valid_o (ssr_pvalid),
-      .resp_ready_i (ssr_pready),
-      .mem_req_o (cfg_req),
-      .mem_req_valid_o (cfg_req_valid),
-      .mem_req_ready_i (cfg_req_ready),
-      .mem_resp_i (cfg_rsp),
-      .mem_resp_valid_i (cfg_req_valid_q)
-    );
-
-    // If Xssr is enabled, we should at least have one SSR
-    `ASSERT_INIT(CheckSsrWithXssr, NumSsrs >= 1);
-
-    snitch_ssr_streamer #(
-      .NumSsrs (NumSsrs),
-      .RPorts (3),
-      .WPorts (1),
-      .SsrCfgs (SsrCfgs),
-      .SsrRegs (SsrRegs),
-      .AddrWidth (TCDMAddrWidth),
-      .DataWidth (DataWidth),
-      .tcdm_req_t (tcdm_req_t),
-      .tcdm_rsp_t (tcdm_rsp_t),
-      .tcdm_user_t (tcdm_user_t)
-    ) i_snitch_ssr_streamer (
-      .clk_i,
-      .rst_ni         ( rst_ni    ),
-      .cfg_word_i     ( cfg_req.word  ),
-      .cfg_write_i    ( cfg_req.write & cfg_req_valid ),
-      .cfg_rdata_o    ( cfg_rsp_data ),
-      .cfg_wdata_i    ( cfg_req.data ),
-      .cfg_wready_o   ( cfg_req_wready ),
-
-      .ssr_raddr_i    ( ssr_raddr  ),
-      .ssr_rdata_o    ( ssr_rdata  ),
-      .ssr_rvalid_i   ( ssr_rvalid ),
-      .ssr_rready_o   ( ssr_rready ),
-      .ssr_rdone_i    ( ssr_rdone  ),
-      .ssr_waddr_i    ( ssr_waddr  ),
-      .ssr_wdata_i    ( ssr_wdata  ),
-      .ssr_wvalid_i   ( ssr_wvalid ),
-      .ssr_wready_o   ( ssr_wready ),
-      .ssr_wdone_i    ( ssr_wdone  ),
-      .mem_req_o      ( ssr_req    ),
-      .mem_rsp_i      ( ssr_rsp    ),
-      .streamctl_done_o   ( ssr_streamctl_done  ),
-      .streamctl_valid_o  ( ssr_streamctl_valid ),
-      .streamctl_ready_i  ( ssr_streamctl_ready )
-    );
-
-  if (NumSsrs > 1) begin : gen_multi_ssr
-    assign ssr_rsp = {tcdm_rsp_i[NumSsrs-1:1], tcdm_rsp};
-    assign {tcdm_req_o[NumSsrs-1:1], tcdm_req} = ssr_req;
-  end else begin : gen_one_ssr
-    assign ssr_rsp = tcdm_rsp;
-    assign tcdm_req = ssr_req;
-  end
-
-  tcdm_mux #(
-    .NrPorts (2),
-    .AddrWidth (TCDMAddrWidth),
-    .DataWidth (DataWidth),
-    .RespDepth (SsrMuxRespDepth),
-    // TODO(zarubaf): USer type
-    .tcdm_req_t (tcdm_req_t),
-    .tcdm_rsp_t (tcdm_rsp_t),
-    .user_t (tcdm_user_t)
-  ) i_tcdm_mux (
-    .clk_i,
-    .rst_ni,
-    .slv_req_i({core_tcdm_req, tcdm_req}),
-    .slv_rsp_o({core_tcdm_rsp, tcdm_rsp}),
-    .mst_req_o(tcdm_req_o[0]),
-    .mst_rsp_i(tcdm_rsp_i[0])
-  );
-
-  end else begin : gen_no_ssrs
+  
+ begin : gen_no_ssrs
     // Connect single TCDM port
     assign tcdm_req_o[0] = core_tcdm_req;
     assign core_tcdm_rsp = tcdm_rsp_i[0];
-    // Tie off SSR insruction stream
-    assign ssr_qready     = '0;
-    assign ssr_resp       = '0;
-    assign ssr_pvalid     = '0;
-    // Tie off SSR data stream
-    assign ssr_rdata      = '0;
-    assign ssr_rready     = '0;
-    assign ssr_wready     = '0;
-    // Tie off SSR stream control
-    assign ssr_streamctl_done   = '0;
-    assign ssr_streamctl_valid  = '0;
+
   end
 
   // Core events for performance counters
@@ -870,13 +534,7 @@ module snitch_cc #(
         is_seq_insn:  (i_snitch.inst_data_i inside {riscv_instr::FREP_I, riscv_instr::FREP_O})
       };
 
-      if (FPEn) begin
-        extras_fpu = fpu_trace;
-        if (Xfrep) begin
-          // Addenda to FPU extras iff popping sequencer
-          extras_fpu_seq_out = fpu_sequencer_trace;
-        end
-      end
+
 
       cycle++;
       // Trace snitch iff:
@@ -890,29 +548,7 @@ module snitch_cc #(
             snitch_pkg::print_snitch_trace(extras_snitch));
         $fwrite(f, trace_entry);
       end
-      if (FPEn) begin
-        // Trace FPU iff:
-        // an incoming handshake on the accelerator bus occurs <==> an instruction was issued
-        // OR an FPU result is ready to be written back to an FPR register or the bus
-        // OR an LSU result is ready to be written back to an FPR register or the bus
-        // OR an FPU result, LSU result or bus value is ready to be written back to an FPR register
-        if (extras_fpu.acc_q_hs || extras_fpu.fpu_out_hs
-        || extras_fpu.lsu_q_hs || extras_fpu.fpr_we) begin
-          $sformat(trace_entry, "%t %1d %8d 0x%h DASM(%h) #; %s\n",
-              $time, cycle, i_snitch.priv_lvl_q, 32'hz, extras_fpu.op_in,
-              snitch_pkg::print_fpu_trace(extras_fpu));
-          $fwrite(f, trace_entry);
-        end
-        // sequencer instructions
-        if (Xfrep) begin
-          if (extras_fpu_seq_out.cbuf_push) begin
-            $sformat(trace_entry, "%t %1d %8d 0x%h DASM(%h) #; %s\n",
-                $time, cycle, i_snitch.priv_lvl_q, 32'hz, 64'hz,
-                snitch_pkg::print_fpu_sequencer_trace(extras_fpu_seq_out));
-            $fwrite(f, trace_entry);
-          end
-        end
-      end
+
     end else begin
       cycle = '0;
     end

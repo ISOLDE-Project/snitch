@@ -86,132 +86,7 @@ package snitch_cluster_pkg;
       default: 0
   };
 
-  localparam fpnew_pkg::fpu_implementation_t FPUImplementation [2] = '{
-    '{
-        PipeRegs: // FMA Block
-                  '{
-                    '{  3, // FP32
-                        3, // FP64
-                        2, // FP16
-                        1, // FP8
-                        2, // FP16alt
-                        1  // FP8alt
-                      },
-                    '{1, 1, 1, 1, 1, 1},   // DIVSQRT
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // NONCOMP
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // CONV
-                    '{2,
-                      2,
-                      2,
-                      2,
-                      2,
-                      2}    // DOTP
-                    },
-        UnitTypes: '{'{fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED},  // FMA
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}, // DIVSQRT
-                    '{fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL}, // NONCOMP
-                    '{fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED},   // CONV
-                    '{fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED}},  // DOTP
-        PipeConfig: fpnew_pkg::BEFORE
-    },
-    '{
-        PipeRegs: // FMA Block
-                  '{
-                    '{  3, // FP32
-                        3, // FP64
-                        2, // FP16
-                        1, // FP8
-                        2, // FP16alt
-                        1  // FP8alt
-                      },
-                    '{1, 1, 1, 1, 1, 1},   // DIVSQRT
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // NONCOMP
-                    '{1,
-                      1,
-                      1,
-                      1,
-                      1,
-                      1},   // CONV
-                    '{2,
-                      2,
-                      2,
-                      2,
-                      2,
-                      2}    // DOTP
-                    },
-        UnitTypes: '{'{fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED,
-                       fpnew_pkg::MERGED},  // FMA
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}, // DIVSQRT
-                    '{fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL,
-                        fpnew_pkg::PARALLEL}, // NONCOMP
-                    '{fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED,
-                        fpnew_pkg::MERGED},   // CONV
-                    '{fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED,
-                        fpnew_pkg::DISABLED}}, // DOTP
-        PipeConfig: fpnew_pkg::BEFORE
-    }
-  };
+  
 
   localparam snitch_ssr_pkg::ssr_cfg_t [3-1:0] SsrCfgs [2] = '{
     '{'{0, 0, 0, 0, 1, 1, 4, 15, 17, 3, 4, 3, 8, 4, 3},
@@ -285,35 +160,14 @@ module snitch_cluster_wrapper (
     .DMAReqFifoDepth (3),
     .ICacheLineWidth (snitch_cluster_pkg::ICacheLineWidth),
     .ICacheLineCount (snitch_cluster_pkg::ICacheLineCount),
-    .ICacheSets (snitch_cluster_pkg::ICacheSets),
-    .VMSupport (0),
+    .ICacheSets (snitch_cluster_pkg::ICacheSets), 
     .RVE (2'b00),
-    .RVF (2'b11),
-    .RVD (2'b11),
-    .XDivSqrt (2'b00),
-    .XF16 (2'b01),
-    .XF16ALT (2'b01),
-    .XF8 (2'b01),
-    .XF8ALT (2'b01),
-    .XFVEC (2'b01),
-    .XFDOTP (2'b01),
     .Xdma (2'b10),
-    .Xssr (2'b01),
-    .Xfrep (2'b01),
-    .FPUImplementation (snitch_cluster_pkg::FPUImplementation),
     .SnitchPMACfg (snitch_cluster_pkg::SnitchPMACfg),
     .NumIntOutstandingLoads (NumIntOutstandingLoads),
     .NumIntOutstandingMem (NumIntOutstandingMem),
-    .NumFPOutstandingLoads (NumFPOutstandingLoads),
-    .NumFPOutstandingMem (NumFPOutstandingMem),
     .NumDTLBEntries (NumDTLBEntries),
     .NumITLBEntries (NumITLBEntries),
-    .NumSsrsMax (3),
-    .NumSsrs (NumSsrs),
-    .SsrMuxRespDepth (SsrMuxRespDepth),
-    .SsrRegs (snitch_cluster_pkg::SsrRegs),
-    .SsrCfgs (snitch_cluster_pkg::SsrCfgs),
-    .NumSequencerInstr (NumSequencerInstr),
     .Hive (snitch_cluster_pkg::Hive),
     .Topology (snitch_pkg::LogarithmicInterconnect),
     .Radix (2),
@@ -324,11 +178,6 @@ module snitch_cluster_wrapper (
     .RegisterTCDMCuts (0),
     .RegisterExtWide (0),
     .RegisterExtNarrow (0),
-    .RegisterFPUReq (0),
-    .RegisterFPUIn (0),
-    .RegisterFPUOut (0),
-    .RegisterSequencer (0),
-    .IsoCrossing (0),
     .NarrowXbarLatency (axi_pkg::CUT_ALL_PORTS),
     .WideXbarLatency (axi_pkg::CUT_ALL_PORTS),
     .WideMaxMstTrans (4),
@@ -348,13 +197,9 @@ module snitch_cluster_wrapper (
     .cluster_base_addr_i (32'h10000000),
     .clk_d2_bypass_i (1'b0),
     .sram_cfgs_i (snitch_cluster_pkg::sram_cfgs_t'('0)),
-    .narrow_in_req_i,
-    .narrow_in_resp_o,
     .narrow_out_req_o,
     .narrow_out_resp_i,
     .wide_out_req_o,
-    .wide_out_resp_i,
-    .wide_in_req_i,
-    .wide_in_resp_o
+    .wide_out_resp_i
   );
 endmodule

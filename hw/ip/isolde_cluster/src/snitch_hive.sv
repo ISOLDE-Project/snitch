@@ -22,10 +22,7 @@ module snitch_hive #(
   /// Data width of the Narrow bus.
   parameter int unsigned NarrowDataWidth    = 0,
   parameter int unsigned WideDataWidth      = 0,
-  /// Enable virtual memory support.
-  parameter bit          VMSupport          = 1,
-  parameter type         dreq_t             = logic,
-  parameter type         drsp_t             = logic,
+  
   parameter type         axi_req_t          = logic,
   parameter type         axi_rsp_t          = logic,
   parameter type         hive_req_t         = logic,
@@ -44,8 +41,8 @@ module snitch_hive #(
   input  hive_req_t [CoreCount-1:0] hive_req_i,
   output hive_rsp_t [CoreCount-1:0] hive_rsp_o,
 
-  output dreq_t    ptw_data_req_o,
-  input  drsp_t    ptw_data_rsp_i,
+  //output dreq_t    ptw_data_req_o,
+  //input  drsp_t    ptw_data_rsp_i,
   output axi_req_t axi_req_o,
   input  axi_rsp_t axi_rsp_i,
 
@@ -122,106 +119,10 @@ module snitch_hive #(
     .axi_rsp_i (axi_rsp_i)
   );
 
-  // -------------------
-  // Shared VM Subsystem
-  // -------------------
 
-  // Typedef outside of the generate block
-  // for VCS compatibility reasons
+ begin : gen_no_ptw
 
-  `SNITCH_VM_TYPEDEF(AddrWidth)
-
-  typedef struct packed {
-    snitch_pkg::va_t va;
-    pa_t ppn;
-  } va_arb_t;
-
-  if (VMSupport) begin : gen_ptw
-
-    logic [2*CoreCount-1:0] ptw_valid, ptw_ready;
-    va_arb_t [2*CoreCount-1:0] ptw_req_in;
-    va_arb_t ptw_req_out;
-
-    // We've two request ports per core for the PTW:
-    // instructions and data.
-    l0_pte_t ptw_pte;
-    logic    ptw_is_4mega;
-
-    for (genvar i = 0; i < CoreCount; i++) begin : gen_connect_ptw_core
-      for (genvar j = 0; j < 2; j++) begin : gen_connect_ptw_port
-        assign ptw_req_in[2*i+j].va = hive_req_i[i].ptw_va;
-        assign ptw_req_in[2*i+j].ppn = hive_req_i[i].ptw_ppn;
-        assign ptw_valid[2*i+j] = hive_req_i[i].ptw_valid;
-      end
-      assign hive_rsp_o[i].ptw_ready = ptw_ready[2*i+:2];
-      assign hive_rsp_o[i].ptw_pte = ptw_pte;
-      assign hive_rsp_o[i].ptw_is_4mega = ptw_is_4mega;
-    end
-
-    logic ptw_valid_out, ptw_ready_out;
-
-    /// Multiplex translation requests
-    stream_arbiter #(
-      .DATA_T ( va_arb_t ),
-      .N_INP  ( 2*CoreCount )
-    ) i_stream_arbiter (
-      .clk_i       ( clk_d2_i      ),
-      .rst_ni      ( rst_ni        ),
-      .inp_data_i  ( ptw_req_in    ),
-      .inp_valid_i ( ptw_valid     ),
-      .inp_ready_o ( ptw_ready     ),
-      .oup_data_o  ( ptw_req_out   ),
-      .oup_valid_o ( ptw_valid_out ),
-      .oup_ready_i ( ptw_ready_out )
-    );
-
-    dreq_t ptw_req;
-    drsp_t ptw_rsp;
-
-    snitch_ptw #(
-      .AddrWidth (AddrWidth),
-      .DataWidth (NarrowDataWidth),
-      .pa_t (pa_t),
-      .l0_pte_t (l0_pte_t),
-      .pte_sv32_t (pte_sv32_t),
-      .dreq_t (dreq_t),
-      .drsp_t (drsp_t)
-    ) i_snitch_ptw (
-      .clk_i         ( clk_d2_i        ),
-      .rst_ni        ( rst_ni          ),
-      .ppn_i         ( ptw_req_out.ppn ),
-      .valid_i       ( ptw_valid_out   ),
-      .ready_o       ( ptw_ready_out   ),
-      .va_i          ( ptw_req_out.va  ),
-      .pte_o         ( ptw_pte         ),
-      .is_4mega_o    ( ptw_is_4mega    ),
-      .data_req_o    ( ptw_req ),
-      .data_rsp_i    ( ptw_rsp )
-    );
-
-    reqrsp_iso #(
-      .AddrWidth (AddrWidth),
-      .DataWidth (NarrowDataWidth),
-      .req_t (dreq_t),
-      .rsp_t (drsp_t),
-      .BypassReq (1'b0),
-      .BypassRsp (1'b0)
-    ) i_reqrsp_iso (
-      .src_clk_i (clk_d2_i),
-      .src_rst_ni (rst_ni),
-      .src_req_i (ptw_req),
-      .src_rsp_o (ptw_rsp),
-      .dst_clk_i (clk_i),
-      .dst_rst_ni (rst_ni),
-      .dst_req_o (ptw_data_req_o),
-      .dst_rsp_i (ptw_data_rsp_i)
-    );
-
-    // TODO(zarubaf): Maybe instantiate PTW cache.
-
-  end else begin : gen_no_ptw
-
-    assign ptw_data_req_o = '0;
+   // assign ptw_data_req_o = '0;
 
     for (genvar i = 0; i < CoreCount; i++) begin : gen_tie_ptw_core
       assign hive_rsp_o[i].ptw_ready = '0;

@@ -63,39 +63,12 @@ module snitch_cluster
   parameter int unsigned ICacheLineCount [NrHives] = '{default: 0},
   /// Number of icache sets.
   parameter int unsigned ICacheSets [NrHives]      = '{default: 0},
-  /// Enable virtual memory support.
-  parameter bit          VMSupport          = 1,
+ 
   /// Per-core enabling of the standard `E` ISA reduced-register extension.
   parameter bit [NrCores-1:0] RVE           = '0,
-  /// Per-core enabling of the standard `F` ISA extensions.
-  parameter bit [NrCores-1:0] RVF           = '0,
-  /// Per-core enabling of the standard `D` ISA extensions.
-  parameter bit [NrCores-1:0] RVD           = '0,
-  /// Per-core enabling of `XDivSqrt` ISA extensions.
-  parameter bit [NrCores-1:0] XDivSqrt      = '0,
-  // Small-float extensions
-  /// FP 16-bit
-  parameter bit [NrCores-1:0] XF16          = '0,
-  /// FP 16 alt a.k.a. brain-float
-  parameter bit [NrCores-1:0] XF16ALT       = '0,
-  /// FP 8-bit
-  parameter bit [NrCores-1:0] XF8           = '0,
-  /// FP 8-bit alt
-  parameter bit [NrCores-1:0] XF8ALT        = '0,
-  /// Enable SIMD support.
-  parameter bit [NrCores-1:0] XFVEC         = '0,
-  /// Enable DOTP support.
-  parameter bit [NrCores-1:0] XFDOTP        = '0,
   /// Per-core enabling of the custom `Xdma` ISA extensions.
   parameter bit [NrCores-1:0] Xdma          = '0,
-  /// Per-core enabling of the custom `Xssr` ISA extensions.
-  parameter bit [NrCores-1:0] Xssr          = '0,
-  /// Per-core enabling of the custom `Xfrep` ISA extensions.
-  parameter bit [NrCores-1:0] Xfrep         = '0,
   /// # Core-global parameters
-  /// FPU configuration.
-  parameter fpnew_pkg::fpu_implementation_t FPUImplementation [NrCores] =
-    '{default: fpnew_pkg::fpu_implementation_t'(0)},
   /// Physical Memory Attribute Configuration
   parameter snitch_pma_pkg::snitch_pma_t SnitchPMACfg = '0,
   /// # Per-core parameters
@@ -103,26 +76,10 @@ module snitch_cluster
   parameter int unsigned NumIntOutstandingLoads [NrCores] = '{default: 0},
   /// Per-core integer outstanding memory operations (load and stores)
   parameter int unsigned NumIntOutstandingMem [NrCores] = '{default: 0},
-  /// Per-core floating-point outstanding loads
-  parameter int unsigned NumFPOutstandingLoads [NrCores] = '{default: 0},
-  /// Per-core floating-point outstanding memory operations (load and stores)
-  parameter int unsigned NumFPOutstandingMem [NrCores] = '{default: 0},
   /// Per-core number of data TLB entries.
   parameter int unsigned NumDTLBEntries [NrCores] = '{default: 0},
   /// Per-core number of instruction TLB entries.
   parameter int unsigned NumITLBEntries [NrCores] = '{default: 0},
-  /// Maximum number of SSRs per core.
-  parameter int unsigned NumSsrsMax = 0,
-  /// Per-core number of SSRs.
-  parameter int unsigned NumSsrs [NrCores] = '{default: 0},
-  /// Per-core depth of TCDM Mux unifying SSR 0 and Snitch requests.
-  parameter int unsigned SsrMuxRespDepth [NrCores] = '{default: 0},
-  /// Per-core internal parameters for each SSR.
-  parameter snitch_ssr_pkg::ssr_cfg_t [NumSsrsMax-1:0] SsrCfgs [NrCores] = '{default: '0},
-  /// Per-core register indices for each SSR.
-  parameter logic [NumSsrsMax-1:0][4:0]  SsrRegs [NrCores] = '{default: 0},
-  /// Per-core amount of sequencer instructions for IPU and FPU if enabled.
-  parameter int unsigned NumSequencerInstr [NrCores] = '{default: 0},
   /// Parent Hive id, a.k.a a mapping which core is assigned to which Hive.
   parameter int unsigned Hive [NrCores] = '{default: 0},
   /// TCDM Configuration.
@@ -215,20 +172,31 @@ module snitch_cluster
   /// Bypass half-frequency clock. (`d2` = divide-by-two). This signal is
   /// pseudo-static.
   input  logic                          clk_d2_bypass_i,
-  /// AXI Core cluster in-port.
-  input  narrow_in_req_t                narrow_in_req_i,
-  output narrow_in_resp_t               narrow_in_resp_o,
   /// AXI Core cluster out-port.
   output narrow_out_req_t               narrow_out_req_o,
   input  narrow_out_resp_t              narrow_out_resp_i,
   /// AXI DMA cluster out-port. Usually wider than the cluster ports so that the
   /// DMA engine can efficiently transfer bulk of data.
   output wide_out_req_t                 wide_out_req_o,
-  input  wide_out_resp_t                wide_out_resp_i,
-  /// AXI DMA cluster in-port.
-  input  wide_in_req_t                  wide_in_req_i,
-  output wide_in_resp_t                 wide_in_resp_o
+  input  wide_out_resp_t                wide_out_resp_i
+
 );
+
+  localparam fpnew_pkg::fpu_implementation_t FPUImplementation [NrCores] =
+    '{default: fpnew_pkg::fpu_implementation_t'(0)};
+
+   /// Maximum number of SSRs per core.
+  localparam int unsigned NumSsrsMax = 0;
+  /// Per-core number of SSRs.
+  localparam int unsigned NumSsrs [NrCores] = '{default: 0};
+  /// Per-core depth of TCDM Mux unifying SSR 0 and Snitch requests.
+  localparam int unsigned SsrMuxRespDepth [NrCores] = '{default: 0};
+  /// Per-core internal parameters for each SSR.
+  localparam snitch_ssr_pkg::ssr_cfg_t [NumSsrsMax-1:0] SsrCfgs [NrCores] = '{default: '0};
+  /// Per-core register indices for each SSR.
+  localparam logic [NumSsrsMax-1:0][4:0]  SsrRegs [NrCores] = '{default: 0};
+  /// Per-core amount of sequencer instructions for IPU and FPU if enabled.
+  localparam int unsigned NumSequencerInstr [NrCores] = '{default: 0};
   // ---------
   // Constants
   // ---------
@@ -446,10 +414,6 @@ module snitch_cluster
   assign cluster_periph_start_address = tcdm_end_address;
   assign cluster_periph_end_address   = tcdm_end_address + ClusterPeriphSize * 1024;
 
-  addr_t zero_mem_start_address, zero_mem_end_address;
-  assign zero_mem_start_address = cluster_periph_end_address;
-  assign zero_mem_end_address   = cluster_periph_end_address + ZeroMemorySize * 1024;
-
   // ----------------
   // Wire Definitions
   // ----------------
@@ -492,8 +456,7 @@ module snitch_cluster
   // 4. Memory Subsystem (Core side).
   reqrsp_req_t [NrCores-1:0] core_req, filtered_core_req;
   reqrsp_rsp_t [NrCores-1:0] core_rsp, filtered_core_rsp;
-  reqrsp_req_t [NrHives-1:0] ptw_req;
-  reqrsp_rsp_t [NrHives-1:0] ptw_rsp;
+
 
   // 5. Peripheral Subsystem
   reg_req_t reg_req;
@@ -525,23 +488,7 @@ module snitch_cluster
     .mst_resp_i (wide_out_resp_i)
   );
 
-  // axi_cut #(
-  //   .Bypass (!RegisterExtWide),
-  //   .aw_chan_t (axi_mst_dma_aw_chan_t),
-  //   .w_chan_t (axi_mst_dma_w_chan_t),
-  //   .b_chan_t (axi_mst_dma_b_chan_t),
-  //   .ar_chan_t (axi_mst_dma_ar_chan_t),
-  //   .r_chan_t (axi_mst_dma_r_chan_t),
-  //   .axi_req_t (axi_mst_dma_req_t),
-  //   .axi_resp_t (axi_mst_dma_resp_t)
-  // ) i_cut_ext_wide_in (
-  //   .clk_i (clk_i),
-  //   .rst_ni (rst_ni),
-  //   .slv_req_i (wide_in_req_i),
-  //   .slv_resp_o (wide_in_resp_o),
-  //   .mst_req_o (wide_axi_mst_req[SoCDMAIn]),
-  //   .mst_resp_i (wide_axi_mst_rsp[SoCDMAIn])
-  // );
+
 
   logic [DmaXbarCfg.NoSlvPorts-1:0][$clog2(DmaXbarCfg.NoMstPorts)-1:0] dma_xbar_default_port;
   xbar_rule_t [DmaXbarCfg.NoAddrRules-1:0] dma_xbar_rule;
@@ -585,21 +532,6 @@ module snitch_cluster
     .default_mst_port_i (dma_xbar_default_port)
   );
 
-  // axi_zero_mem #(
-  //   .axi_req_t (axi_slv_dma_req_t),
-  //   .axi_resp_t (axi_slv_dma_resp_t),
-  //   .AddrWidth (PhysicalAddrWidth),
-  //   .DataWidth (WideDataWidth),
-  //   .IdWidth (WideIdWidthOut),
-  //   .NumBanks (1),
-  //   .BufDepth (1)
-  // ) i_axi_zeromem (
-  //   .clk_i,
-  //   .rst_ni,
-  //   .busy_o (),
-  //   .axi_req_i (wide_axi_slv_req[ZeroMemory]),
-  //   .axi_resp_o (wide_axi_slv_rsp[ZeroMemory])
-  // );
 
   addr_t ext_dma_req_q_addr_nontrunc;
 
@@ -827,41 +759,25 @@ module snitch_cluster
         .dma_events_t (dma_events_t),
         .BootAddr (BootAddr),
         .RVE (RVE[i]),
-        .RVF (RVF[i]),
-        .RVD (RVD[i]),
-        .XDivSqrt (XDivSqrt[i]),
-        .XF16 (XF16[i]),
-        .XF16ALT (XF16ALT[i]),
-        .XF8 (XF8[i]),
-        .XF8ALT (XF8ALT[i]),
-        .XFVEC (XFVEC[i]),
-        .XFDOTP (XFDOTP[i]),
+        .RVF (1'b0),
+        .RVD (1'b0),
+        .XF16 (1'b0),
+        .XF16ALT (1'b0),
+        .XF8 (1'b0),
+        .XF8ALT (1'b0),
+        .XFVEC (1'b0),
+        .XFDOTP (1'b0),
         .Xdma (Xdma[i]),
         .IsoCrossing (IsoCrossing),
-        .Xfrep (Xfrep[i]),
-        .Xssr (Xssr[i]),
-        .Xipu (1'b0),
-         .VMSupport (1'b0),
         .NumIntOutstandingLoads (NumIntOutstandingLoads[i]),
         .NumIntOutstandingMem (NumIntOutstandingMem[i]),
-        .NumFPOutstandingLoads (NumFPOutstandingLoads[i]),
-        .NumFPOutstandingMem (NumFPOutstandingMem[i]),
         .FPUImplementation (FPUImplementation[i]),
         .NumDTLBEntries (NumDTLBEntries[i]),
         .NumITLBEntries (NumITLBEntries[i]),
-        .NumSequencerInstr (NumSequencerInstr[i]),
-        .NumSsrs (NumSsrs[i]),
-        .SsrMuxRespDepth (SsrMuxRespDepth[i]),
-        .SsrCfgs (SsrCfgs[i][NumSsrs[i]-1:0]),
-        .SsrRegs (SsrRegs[i][NumSsrs[i]-1:0]),
         .RegisterOffloadReq (RegisterOffloadReq),
         .RegisterOffloadRsp (RegisterOffloadRsp),
         .RegisterCoreReq (RegisterCoreReq),
         .RegisterCoreRsp (RegisterCoreRsp),
-        .RegisterFPUReq (RegisterFPUReq),
-        .RegisterSequencer (RegisterSequencer),
-        .RegisterFPUIn (RegisterFPUIn),
-        .RegisterFPUOut (RegisterFPUOut),
         .TCDMAddrWidth (TCDMAddrWidth)
       ) i_snitch_cc (
         .clk_i,
@@ -921,9 +837,6 @@ module snitch_cluster
         .AddrWidth (PhysicalAddrWidth),
         .NarrowDataWidth (NarrowDataWidth),
         .WideDataWidth (WideDataWidth),
-         .VMSupport (1'b0),
-        .dreq_t (reqrsp_req_t),
-        .drsp_t (reqrsp_rsp_t),
         .hive_req_t (hive_req_t),
         .hive_rsp_t (hive_rsp_t),
         .CoreCount (HiveSize),
@@ -941,8 +854,6 @@ module snitch_cluster
         .rst_ni,
         .hive_req_i (hive_req_reshape),
         .hive_rsp_o (hive_rsp_reshape),
-        .ptw_data_req_o (ptw_req[i]),
-        .ptw_data_rsp_i (ptw_rsp[i]),
         .axi_req_o (wide_axi_mst_req[ICache+i]),
         .axi_rsp_i (wide_axi_mst_rsp[ICache+i]),
         .icache_prefetch_enable_i (icache_prefetch_enable),
@@ -951,45 +862,6 @@ module snitch_cluster
       );
   end
 
-  // --------
-  // PTW Demux
-  // --------
-  // reqrsp_req_t ptw_to_axi_req;
-  // reqrsp_rsp_t ptw_to_axi_rsp;
-
-  // reqrsp_mux #(
-  //   .NrPorts (NrHives),
-  //   .AddrWidth (PhysicalAddrWidth),
-  //   .DataWidth (NarrowDataWidth),
-  //   .req_t (reqrsp_req_t),
-  //   .rsp_t (reqrsp_rsp_t),
-  //   .RespDepth (2)
-  // ) i_reqrsp_mux_ptw (
-  //   .clk_i,
-  //   .rst_ni,
-  //   .slv_req_i (ptw_req),
-  //   .slv_rsp_o (ptw_rsp),
-  //   .mst_req_o (ptw_to_axi_req),
-  //   .mst_rsp_i (ptw_to_axi_rsp),
-  //   .idx_o (/*not connected*/)
-  // );
-
-  // reqrsp_to_axi #(
-  //   .DataWidth (NarrowDataWidth),
-  //   .UserWidth (NarrowUserWidth),
-  //   .reqrsp_req_t (reqrsp_req_t),
-  //   .reqrsp_rsp_t (reqrsp_rsp_t),
-  //   .axi_req_t (axi_mst_req_t),
-  //   .axi_rsp_t (axi_mst_resp_t)
-  // ) i_reqrsp_to_axi_ptw (
-  //   .clk_i,
-  //   .rst_ni,
-  //   .user_i ('0),
-  //   .reqrsp_req_i (ptw_to_axi_req),
-  //   .reqrsp_rsp_o (ptw_to_axi_rsp),
-  //   .axi_req_o (narrow_axi_mst_req[PTW]),
-  //   .axi_rsp_i (narrow_axi_mst_rsp[PTW])
-  // );
 
   // --------
   // Coes SoC
@@ -1098,24 +970,7 @@ module snitch_cluster
   );
   assign cluster_xbar_default_port = '{default: SoC};
 
-  // Optionally decouple the external narrow AXI slave port.
-  // axi_cut #(
-  //   .Bypass (!RegisterExtNarrow),
-  //   .aw_chan_t (axi_mst_aw_chan_t),
-  //   .w_chan_t (axi_mst_w_chan_t),
-  //   .b_chan_t (axi_mst_b_chan_t),
-  //   .ar_chan_t (axi_mst_ar_chan_t),
-  //   .r_chan_t (axi_mst_r_chan_t),
-  //   .axi_req_t (axi_mst_req_t),
-  //   .axi_resp_t (axi_mst_resp_t)
-  // ) i_cut_ext_narrow_slv (
-  //   .clk_i,
-  //   .rst_ni,
-  //   .slv_req_i (narrow_in_req_i),
-  //   .slv_resp_o (narrow_in_resp_o),
-  //   .mst_req_o (narrow_axi_mst_req[AXISoC]),
-  //   .mst_resp_i (narrow_axi_mst_rsp[AXISoC])
-  // );
+
 
   // ---------
   // Slaves
