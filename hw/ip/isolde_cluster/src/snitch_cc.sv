@@ -45,24 +45,13 @@ module snitch_cc #(
   parameter logic [31:0] BootAddr           = 32'h0000_1000,
   /// Reduced-register extension
   parameter bit          RVE                = 0,
-  /// Enable F and D Extension
-  parameter bit          RVF                = 1,
-  parameter bit          RVD                = 1,
-  parameter bit          XF8                = 0,
-  parameter bit          XF8ALT             = 0,
-  parameter bit          XF16               = 0,
-  parameter bit          XF16ALT            = 0,
-  parameter bit          XFVEC              = 0,
-  parameter bit          XFDOTP             = 0,
   /// Enable Snitch DMA
   parameter bit          Xdma               = 0,
   parameter int unsigned NumIntOutstandingLoads = 0,
   parameter int unsigned NumIntOutstandingMem = 0,
   parameter int unsigned NumDTLBEntries = 0,
   parameter int unsigned NumITLBEntries = 0,
-  /// Add isochronous clock-domain crossings e.g., make it possible to operate
-  /// the core in a slower clock domain.
-  parameter bit          IsoCrossing        = 0,
+
   /// Timing Parameters
   /// Insert Pipeline registers into off-loading path (request)
   parameter bit          RegisterOffloadReq = 0,
@@ -79,7 +68,7 @@ module snitch_cc #(
   parameter type data_t = logic [DataWidth-1:0]
 ) (
   input  logic                       clk_i,
-  input  logic                       clk_d2_i,
+  //input  logic                       clk_d2_i,
   input  logic                       rst_ni,
   input  logic                       rst_int_ss_ni,
   input  logic                       rst_fp_ss_ni,
@@ -108,21 +97,10 @@ module snitch_cc #(
 
   /// Has virtual memory support.
   localparam bit          VMSupport          = 0;
-  typedef struct packed {
-    logic [4:0]  id;
-    logic [11:0] word;
-    logic [31:0] data;
-    logic        write;
-  } ssr_cfg_req_t;
-
-  typedef struct packed {
-    logic [4:0]  id;
-    logic [31:0] data;
-  } ssr_cfg_rsp_t;
+ 
 
   acc_req_t acc_snitch_req;
   acc_req_t acc_snitch_demux;
-  acc_req_t acc_snitch_demux_q;
   acc_resp_t acc_seq;
   acc_resp_t acc_demux_snitch;
   acc_resp_t acc_demux_snitch_q;
@@ -131,7 +109,6 @@ module snitch_cc #(
 
 
   logic acc_snitch_demux_qvalid, acc_snitch_demux_qready;
-  logic acc_snitch_demux_qvalid_q, acc_snitch_demux_qready_q;
   logic acc_qvalid, acc_qready;
   logic dma_qvalid, dma_qready;
 
@@ -141,7 +118,7 @@ module snitch_cc #(
  
  
   logic acc_demux_snitch_valid, acc_demux_snitch_ready;
-  logic acc_demux_snitch_valid_q, acc_demux_snitch_ready_q;
+
 
   fpnew_pkg::roundmode_e fpu_rnd_mode;
   fpnew_pkg::fmt_mode_t  fpu_fmt_mode;
@@ -151,10 +128,8 @@ module snitch_cc #(
 
 
   // Snitch Integer Core
-  dreq_t snitch_dreq_d, snitch_dreq_q, merged_dreq;
-  drsp_t snitch_drsp_d, snitch_drsp_q, merged_drsp;
-
-  logic wake_up;
+  dreq_t  merged_dreq;
+  drsp_t  merged_drsp;
 
   `SNITCH_VM_TYPEDEF(AddrWidth)
 
@@ -186,11 +161,11 @@ module snitch_cc #(
     .XF8 (1'b0),
     .XF8ALT (1'b0),
     .XFVEC (1'b0),
-    .XFDOTP (1'b0)
-    //.XFAUX (XFauxMerged),
-   // .FLEN (FLEN)
+    .XFDOTP (1'b0),
+    .XFAUX (1'b0),
+    .FLEN (1'b0)
   ) i_snitch (
-    .clk_i ( clk_d2_i ), // if necessary operate on half the frequency
+    .clk_i ( clk_i ), // if necessary operate on half the frequency
     .rst_i ( ~rst_ni ),
     .hart_id_i,
     .irq_i,
@@ -207,8 +182,8 @@ module snitch_cc #(
     .acc_prsp_i ( acc_demux_snitch ),
     .acc_pvalid_i ( acc_demux_snitch_valid ),
     .acc_pready_o ( acc_demux_snitch_ready ),
-    .data_req_o ( snitch_dreq_d ),
-    .data_rsp_i ( snitch_drsp_d ),
+    .data_req_o ( merged_dreq ),
+    .data_rsp_i ( merged_drsp ),
     .ptw_valid_o (hive_req_o.ptw_valid),
     .ptw_ready_i (hive_rsp_i.ptw_ready),
     .ptw_va_o (hive_req_o.ptw_va),
@@ -221,72 +196,24 @@ module snitch_cc #(
     .core_events_o ( snitch_events)
   );
 
-  reqrsp_iso #(
-    .AddrWidth (AddrWidth),
-    .DataWidth (DataWidth),
-    .req_t (dreq_t),
-    .rsp_t (drsp_t),
-    .BypassReq (!RegisterCoreReq),
-    .BypassRsp (!IsoCrossing && !RegisterCoreRsp)
-  ) i_reqrsp_iso (
-    .src_clk_i (clk_d2_i),
-    .src_rst_ni (rst_ni),
-    .src_req_i (snitch_dreq_d),
-    .src_rsp_o (snitch_drsp_d),
-    .dst_clk_i (clk_i),
-    .dst_rst_ni (rst_ni),
-    .dst_req_o (snitch_dreq_q),
-    .dst_rsp_i (snitch_drsp_q)
-  );
 
-  // Cut off-loading request path
-  isochronous_spill_register #(
-    .T      (acc_req_t),
-    .Bypass (!IsoCrossing && !RegisterOffloadReq)
-  ) i_spill_register_acc_demux_req (
-    .src_clk_i   ( clk_d2_i                  ),
-    .src_rst_ni  ( rst_ni                    ),
-    .src_valid_i ( acc_snitch_demux_qvalid   ),
-    .src_ready_o ( acc_snitch_demux_qready   ),
-    .src_data_i  ( acc_snitch_demux          ),
-    .dst_clk_i   ( clk_i                     ),
-    .dst_rst_ni  ( rst_ni                    ),
-    .dst_valid_o ( acc_snitch_demux_qvalid_q ),
-    .dst_ready_i ( acc_snitch_demux_qready_q ),
-    .dst_data_o  ( acc_snitch_demux_q        )
-  );
 
-  // Cut off-loading response path
-  isochronous_spill_register #(
-    .T (acc_resp_t),
-    .Bypass (!IsoCrossing && !RegisterOffloadRsp)
-  ) i_spill_register_acc_demux_resp (
-    .src_clk_i   ( clk_i                    ),
-    .src_rst_ni  ( rst_ni                   ),
-    .src_valid_i ( acc_demux_snitch_valid_q ),
-    .src_ready_o ( acc_demux_snitch_ready_q ),
-    .src_data_i  ( acc_demux_snitch_q       ),
-    .dst_clk_i   ( clk_d2_i                 ),
-    .dst_rst_ni  ( rst_ni                   ),
-    .dst_valid_o ( acc_demux_snitch_valid   ),
-    .dst_ready_i ( acc_demux_snitch_ready   ),
-    .dst_data_o  ( acc_demux_snitch         )
-  );
+
 
   // Accelerator Demux Port
   stream_demux #(
     .N_OUP ( 3 )
   ) i_stream_demux_offload (
-    .inp_valid_i  ( acc_snitch_demux_qvalid_q  ),
-    .inp_ready_o  ( acc_snitch_demux_qready_q  ),
-    .oup_sel_i    ( acc_snitch_demux_q.addr[$clog2(5)-1:0]             ),
+    .inp_valid_i  ( acc_snitch_demux_qvalid  ),
+    .inp_ready_o  ( acc_snitch_demux_qready  ),
+    .oup_sel_i    ( acc_snitch_demux.addr[$clog2(5)-1:0]             ),
     .oup_valid_o  ( { dma_qvalid, hive_req_o.acc_qvalid, acc_qvalid} ),
     .oup_ready_i  ( { dma_qready, hive_rsp_i.acc_qready, acc_qready} )
   );
 
   // To shared muldiv
-  assign hive_req_o.acc_req = acc_snitch_demux_q;
-  assign acc_snitch_req = acc_snitch_demux_q;
+  assign hive_req_o.acc_req = acc_snitch_demux;
+  assign acc_snitch_req = acc_snitch_demux;
 
   stream_arbiter #(
     .DATA_T      ( acc_resp_t ),
@@ -297,9 +224,9 @@ module snitch_cc #(
     .inp_data_i  ( { dma_resp,   hive_rsp_i.acc_resp,   acc_seq    } ),
     .inp_valid_i ( { dma_pvalid, hive_rsp_i.acc_pvalid, acc_pvalid } ),
     .inp_ready_o ( { dma_pready, hive_req_o.acc_pready, acc_pready } ),
-    .oup_data_o  ( acc_demux_snitch_q                      ),
-    .oup_valid_o ( acc_demux_snitch_valid_q                ),
-    .oup_ready_i ( acc_demux_snitch_ready_q                )
+    .oup_data_o  ( acc_demux_snitch                      ),
+    .oup_valid_o ( acc_demux_snitch_valid                ),
+    .oup_ready_i ( acc_demux_snitch_ready                )
   );
 
   if (Xdma) begin : gen_dma
@@ -353,14 +280,7 @@ module snitch_cc #(
 
 
     
-  
-  
 
-
-  // pragma translate_off
-  snitch_pkg::fpu_trace_port_t fpu_trace;
-  snitch_pkg::fpu_sequencer_trace_port_t fpu_sequencer_trace;
-  // pragma translate_on
 
  begin : gen_no_fpu
     assign fpu_status = '0;
@@ -370,9 +290,6 @@ module snitch_cc #(
     assign acc_seq.id    = '0;
     assign acc_seq.error = '0;
     assign acc_pvalid    = '0;
-
-    assign merged_dreq = snitch_dreq_q;
-    assign snitch_drsp_q = merged_drsp;
 
     assign core_events_o.issue_fpu = '0;
     assign core_events_o.issue_fpu_seq = '0;
@@ -489,8 +406,7 @@ module snitch_cc #(
     automatic string trace_entry;
     automatic string extras_str;
     automatic snitch_pkg::snitch_trace_port_t extras_snitch;
-    automatic snitch_pkg::fpu_trace_port_t extras_fpu;
-    automatic snitch_pkg::fpu_sequencer_trace_port_t extras_fpu_seq_out;
+
 
     if (rst_ni) begin
       extras_snitch = '{
