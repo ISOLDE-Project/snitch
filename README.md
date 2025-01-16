@@ -67,6 +67,7 @@ The folder hw/system/snitch_isolde/ip will contain the vivado IP
 ```
 git config --global user.name "FIRST_NAME LAST_NAME"
 git config --global user.email "MY_NAME@example.com"
+git config --global credential.helper manager-core
 ```
 ## github cli  
 [Take GitHub to the command line](https://github.com/cli/cli#installation)  
